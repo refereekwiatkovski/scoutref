@@ -13,7 +13,7 @@ exports.handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: JSON.stringify({ error: 'JSON inválido' }) }; }
 
-  const { image, mediaType } = body;
+  const { image, mediaType, prompt: customPrompt } = body;
   if (!image) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Imagem obrigatória' }) };
 
   const mt = mediaType || 'image/jpeg';
@@ -33,13 +33,7 @@ exports.handler = async (event) => {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: mt, data: image } },
-            { type: 'text', text: `Esta imagem mostra uma tabela de classificação de futsal brasileiro. Leia todos os dados com atenção.
-
-Extraia TODAS as linhas e retorne APENAS JSON puro sem markdown:
-
-{"competicao":"nome se visível","tabela":[{"posicao":1,"equipe":"nome","pontos":0,"jogos":0,"vitorias":0,"empates":0,"derrotas":0,"golsPro":0,"golsContra":0}]}
-
-Se não houver tabela: {"tabela":[],"erro":"tabela não encontrada"}` }
+            { type: 'text', text: customPrompt || `Esta imagem mostra uma tabela de classificação de futsal brasileiro. Leia todos os dados com atenção.\n\nExtraia TODAS as linhas e retorne APENAS JSON puro sem markdown:\n\n{"competicao":"nome se visível","tabela":[{"posicao":1,"equipe":"nome","pontos":0,"jogos":0,"vitorias":0,"empates":0,"derrotas":0,"golsPro":0,"golsContra":0}]}\n\nSe não houver tabela: {"tabela":[],"erro":"tabela não encontrada"}` }
           ]
         }]
       })
