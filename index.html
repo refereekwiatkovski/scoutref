@@ -524,6 +524,14 @@ function novaAnalise(){
 
 // ── NAVIGATION ───────────────────────────────────────────
 function goStep(n){
+  if(n===2){
+    const grupos=['chips-intensidade','chips-torcida','chips-nivel','chips-emjogo'];
+    const nomes=['Intensidade emocional','Torcida','Nível técnico','O que está em jogo'];
+    for(let i=0;i<grupos.length;i++){
+      const sel=document.querySelectorAll(`#${grupos[i]} .chip.sel,#${grupos[i]} .chip.sel-blue,#${grupos[i]} .chip.sel-green,#${grupos[i]} .chip.sel-red,#${grupos[i]} .chip.sel-amber`);
+      if(sel.length===0){alert(`Selecione ao menos uma opção em "${nomes[i]}"`);return;}
+    }
+  }
   ['s0','s1','s2','s3','s4'].forEach((id,i)=>{
     document.getElementById(id).style.display=i===n?'block':'none';
     const dot=document.querySelectorAll('.step-dot')[i];
