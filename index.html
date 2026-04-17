@@ -603,6 +603,49 @@ function limparTime(team){
   document.getElementById(team+'-q').value='';
 }
 
+function renderClassificacao(d){
+  const el = document.getElementById('class-result');
+  if(!d.tabela?.length){
+    el.innerHTML='<div style="font-size:12px;color:#f87171">Tabela não encontrada. Tente um print mais nítido.</div>';
+    el.style.display='block';
+    return;
+  }
+  const m = (D.ex.mandante||'').toLowerCase().substring(0,5);
+  const v = (D.ex.visitante||'').toLowerCase().substring(0,5);
+  let h = `<div style="font-size:11px;font-weight:700;color:#34d399;text-transform:uppercase;margin-bottom:8px">${d.competicao||'Classificação extraída'}</div>
+  <table style="width:100%;font-size:12px;border-collapse:collapse">
+    <tr style="color:#5a6078;font-size:10px">
+      <td style="padding:3px 4px">#</td>
+      <td style="padding:3px 4px">Equipe</td>
+      <td style="padding:3px 4px;text-align:center">Pts</td>
+      <td style="padding:3px 4px;text-align:center">J</td>
+      <td style="padding:3px 4px;text-align:center">V</td>
+      <td style="padding:3px 4px;text-align:center">E</td>
+      <td style="padding:3px 4px;text-align:center">D</td>
+      <td style="padding:3px 4px;text-align:center">GP</td>
+      <td style="padding:3px 4px;text-align:center">GC</td>
+    </tr>`;
+  d.tabela.forEach(row=>{
+    const nome = (row.equipe||'').toLowerCase();
+    const dest = nome.includes(m) || nome.includes(v);
+    const cor = dest ? 'color:#fbbf24;font-weight:700' : 'color:#f0f2f8';
+    h += `<tr style="${cor};border-bottom:1px solid rgba(255,255,255,0.05)">
+      <td style="padding:4px">${row.posicao}º</td>
+      <td style="padding:4px">${row.equipe}</td>
+      <td style="padding:4px;text-align:center">${row.pontos}</td>
+      <td style="padding:4px;text-align:center">${row.jogos}</td>
+      <td style="padding:4px;text-align:center">${row.vitorias}</td>
+      <td style="padding:4px;text-align:center">${row.empates}</td>
+      <td style="padding:4px;text-align:center">${row.derrotas}</td>
+      <td style="padding:4px;text-align:center">${row.golsPro||0}</td>
+      <td style="padding:4px;text-align:center">${row.golsContra||0}</td>
+    </tr>`;
+  });
+  h += '</table>';
+  el.innerHTML = h;
+  el.style.display = 'block';
+}
+
 function renderStats(team,d){
   const el=document.getElementById(team+'-stats');
   const s=d.classificacao; const g=d.ultimosJogos||[]; const f=d.forma||'';
