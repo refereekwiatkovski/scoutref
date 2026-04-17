@@ -238,11 +238,11 @@ body{background:#0f1117;color:#f0f2f8;font-family:-apple-system,BlinkMacSystemFo
     <div class="card" style="margin-bottom:1rem">
       <div class="card-title">Classificação da competição</div>
       <div class="info" style="margin-bottom:.75rem">Tire um print da tabela no site da FPFS e envie abaixo. A IA lê a imagem e extrai os dados automaticamente.</div>
-      <div id="upload-zone" onclick="document.getElementById('img-class').click()" style="border:1.5px dashed rgba(255,255,255,0.15);border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;transition:border-color .15s">
+      <label for="img-class" style="display:block;border:1.5px dashed rgba(255,255,255,0.15);border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;transition:border-color .15s">
         <input type="file" id="img-class" accept="image/*" onchange="uploadClassificacao(this)" style="display:none"/>
         <div style="font-size:28px;margin-bottom:6px">📷</div>
         <p style="font-size:13px;color:#8b92a8">Clique para enviar o print da tabela</p>
-      </div>
+      </label>
       <img id="img-class-preview" style="display:none;width:100%;border-radius:8px;margin-top:8px;max-height:180px;object-fit:contain"/>
       <div id="class-loading" style="display:none" class="loading"><div class="spin"></div><span>Lendo imagem com IA...</span></div>
       <div id="class-result" style="display:none;margin-top:10px"></div>
@@ -254,10 +254,10 @@ body{background:#0f1117;color:#f0f2f8;font-family:-apple-system,BlinkMacSystemFo
         <div class="team-label" id="t1-label">🟢 Mandante</div>
         <div class="field">
           <label>Print do SofaScore / FPFS</label>
-          <div onclick="document.getElementById('img-t1').click()" style="border:1.5px dashed rgba(52,211,153,0.3);border-radius:10px;padding:.75rem;text-align:center;cursor:pointer;font-size:12px;color:#8b92a8">
+          <label for="img-t1" style="display:block;border:1.5px dashed rgba(52,211,153,0.3);border-radius:10px;padding:.75rem;text-align:center;cursor:pointer;font-size:12px;color:#8b92a8">
+            <input type="file" id="img-t1" accept="image/*" onchange="uploadEquipe(this,'t1')" style="display:none"/>
             📷 Clique para enviar o print da equipe
-          </div>
-          <input type="file" id="img-t1" accept="image/*" onchange="uploadEquipe(this,'t1')" style="display:none"/>
+          </label>
           <img id="img-t1-preview" style="display:none;width:100%;border-radius:8px;margin-top:6px;max-height:120px;object-fit:contain"/>
           <div id="t1-loading" style="display:none" class="loading"><div class="spin"></div><span>Lendo com IA...</span></div>
           <div id="t1-stats" style="display:none;margin-top:8px"></div>
@@ -308,10 +308,10 @@ body{background:#0f1117;color:#f0f2f8;font-family:-apple-system,BlinkMacSystemFo
         <div class="team-label" id="t2-label">🔵 Visitante</div>
         <div class="field">
           <label>Print do SofaScore / FPFS</label>
-          <div onclick="document.getElementById('img-t2').click()" style="border:1.5px dashed rgba(79,142,247,0.3);border-radius:10px;padding:.75rem;text-align:center;cursor:pointer;font-size:12px;color:#8b92a8">
+          <label for="img-t2" style="display:block;border:1.5px dashed rgba(79,142,247,0.3);border-radius:10px;padding:.75rem;text-align:center;cursor:pointer;font-size:12px;color:#8b92a8">
+            <input type="file" id="img-t2" accept="image/*" onchange="uploadEquipe(this,'t2')" style="display:none"/>
             📷 Clique para enviar o print da equipe
-          </div>
-          <input type="file" id="img-t2" accept="image/*" onchange="uploadEquipe(this,'t2')" style="display:none"/>
+          </label>
           <img id="img-t2-preview" style="display:none;width:100%;border-radius:8px;margin-top:6px;max-height:120px;object-fit:contain"/>
           <div id="t2-loading" style="display:none" class="loading"><div class="spin"></div><span>Lendo com IA...</span></div>
           <div id="t2-stats" style="display:none;margin-top:8px"></div>
@@ -361,10 +361,10 @@ body{background:#0f1117;color:#f0f2f8;font-family:-apple-system,BlinkMacSystemFo
     <!-- CONFRONTO DIRETO -->
     <div class="confronto-card" style="margin-top:1rem">
       <div class="confronto-title">Confronto direto</div>
-      <div onclick="document.getElementById('img-h2h').click()" style="border:1.5px dashed rgba(251,191,36,0.3);border-radius:10px;padding:.75rem;text-align:center;cursor:pointer;font-size:12px;color:#8b92a8;margin-bottom:8px">
+      <label for="img-h2h" style="display:block;border:1.5px dashed rgba(251,191,36,0.3);border-radius:10px;padding:.75rem;text-align:center;cursor:pointer;font-size:12px;color:#8b92a8;margin-bottom:8px">
+        <input type="file" id="img-h2h" accept="image/*" onchange="uploadH2H(this)" style="display:none"/>
         📷 Clique para enviar print do confronto direto (SofaScore H2H)
-      </div>
-      <input type="file" id="img-h2h" accept="image/*" onchange="uploadH2H(this)" style="display:none"/>
+      </label>
       <img id="img-h2h-preview" style="display:none;width:100%;border-radius:8px;margin-bottom:8px;max-height:150px;object-fit:contain"/>
       <div id="h2h-loading" style="display:none" class="loading"><div class="spin"></div><span>Lendo confronto com IA...</span></div>
       <div id="confronto-content" style="margin-top:4px"></div>
