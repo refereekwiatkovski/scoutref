@@ -529,7 +529,14 @@ function uploadClassificacao(input){
   const reader = new FileReader();
   reader.onload = async (e) => {
     const b64 = e.target.result.split(',')[1];
-    const mediaType = file.type || 'image/jpeg';
+    // Detecta o tipo real pelo header da imagem
+    const mediaType = (() => {
+      const header = e.target.result.substring(0,30);
+      if(header.includes('data:image/png')) return 'image/png';
+      if(header.includes('data:image/webp')) return 'image/webp';
+      if(header.includes('data:image/gif')) return 'image/gif';
+      return 'image/jpeg';
+    })();
     D.classImg = b64;
     document.getElementById('img-class-preview').src = e.target.result;
     document.getElementById('img-class-preview').style.display='block';
