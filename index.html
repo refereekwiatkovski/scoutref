@@ -529,33 +529,26 @@ async function buscar(input, team) {
   const res = document.getElementById(team + '-res');
   clearTimeout(timers[team]);
   if (q.length < 2) { res.style.display = 'none'; return; }
-  timers[team] = setTimeout(async () => {
-    try {
-      const r = await fetch('/.netlify/functions/search-teams?query=' + encodeURIComponent(q));
-      const d = await r.json();
-      const ts = d.teams || [];
-      if (!ts.length) { res.style.display = 'none'; return; }
-      res.innerHTML = ts.map(t =>
-        `<div class="sri" onclick='escolher("${team}",${JSON.stringify(t).replace(/'/g, "&#39;")})'>
-          <div>${t.name}</div><div class="sub">${t.country}${t.sport ? ' · ' + t.sport : ''}</div>
-        </div>`).join('');
-      res.style.display = 'block';
-    } catch (e) { res.style.display = 'none'; }
-  }, 350);
+  // Mostra botão de buscar ao digitar
+  res.innerHTML = `<div class="sri" onclick="escolher('${team}','${q.replace(/'/g,"\'")}')">
+    <div>Buscar dados de "<strong>${q}</strong>" com IA</div>
+    <div class="sub">Clique para pesquisar classificação e resultados</div>
+  </div>`;
+  res.style.display = 'block';
 }
 
-async function escolher(team, obj) {
-  D[team] = obj;
+async function escolher(team, nome) {
   document.getElementById(team + '-res').style.display = 'none';
   document.getElementById(team + '-q').value = '';
   document.getElementById(team + '-chosen').style.display = 'block';
   document.getElementById(team + '-chosen').innerHTML =
-    `<div class="team-chosen">${obj.name}<button onclick="limparTime('${team}')">Trocar</button></div>`;
+    `<div class="team-chosen">${nome}<button onclick="limparTime('${team}')">Trocar</button></div>`;
+  D[team] = { name: nome };
   const el = document.getElementById(team + '-stats');
   el.style.display = 'block';
-  el.innerHTML = '<div class="loading"><div class="spin"></div><span>Carregando...</span></div>';
+  el.innerHTML = '<div class="loading"><div class="spin"></div><span>Buscando dados com IA...</span></div>';
   try {
-    const r = await fetch('/.netlify/functions/team-data?teamId=' + obj.id);
+    const r = await fetch('/.netlify/functions/team-data?teamName=' + encodeURIComponent(nome));
     const d = await r.json();
     D[team + 's'] = d;
     renderStats(team, d);
@@ -573,15 +566,16 @@ function renderStats(team, d) {
   const el = document.getElementById(team + '-stats');
   const s = d.standings; const g = d.recentGames || []; const f = d.summary?.form || '';
   let h = '';
-  if (s) h += `<div class="stat-row">
+  if (s && s.position) h += `<div class="stat-row">
     <div class="stat"><div class="n">${s.position}º</div><div class="l">Pos.</div></div>
     <div class="stat"><div class="n">${s.points}</div><div class="l">Pts</div></div>
-    <div class="stat"><div class="n">${s.goalsFor}</div><div class="l">Gols</div></div>
-    <div class="stat"><div class="n">${s.goalsAgainst}</div><div class="l">Sofreu</div></div>
+    <div class="stat"><div class="n">${s.goalsFor||0}</div><div class="l">Gols</div></div>
+    <div class="stat"><div class="n">${s.goalsAgainst||0}</div><div class="l">Sofreu</div></div>
   </div>`;
   if (f) h += `<div class="form">${f.split('').map(r => `<div class="fb ${r}">${r}</div>`).join('')}</div>`;
   if (g.length) { h += '<div class="games">'; g.forEach(x => { h += `<div class="game"><div class="gr ${x.result}">${x.result}</div><div class="opp">${x.opponent}</div><div class="sc">${x.score}</div><div style="font-size:10px;color:#5a6078">${x.home ? 'Casa' : 'Fora'}</div></div>`; }); h += '</div>'; }
-  el.innerHTML = h || '<div style="font-size:12px;color:#5a6078">Sem dados.</div>';
+  if (d.contexto) h += `<div style="font-size:12px;color:#8b92a8;margin-top:8px;line-height:1.5;padding:8px;background:rgba(255,255,255,0.04);border-radius:8px">${d.contexto}</div>`;
+  el.innerHTML = h || '<div style="font-size:12px;color:#5a6078">Sem dados encontrados.</div>';
 }
 
 // ── HELPERS ──────────────────────────────────────────────
