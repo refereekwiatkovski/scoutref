@@ -127,7 +127,7 @@ Seja direto. Sem introduções genéricas. Cada bloco começa com o título em m
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'model: 'claude-opus-4-5',
         max_tokens: 1500,
         messages: [{ role: 'user', content: prompt }]
       })
