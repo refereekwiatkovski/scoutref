@@ -13,18 +13,10 @@ exports.handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: JSON.stringify({ error: 'JSON inválido' }) }; }
 
-  const { image, type } = body;
+  const { image, mediaType } = body;
   if (!image) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Imagem obrigatória' }) };
 
-  const prompt = type === 'classificacao'
-    ? `Analise esta imagem de uma tabela de classificação de futsal. Extraia todos os dados da tabela e retorne APENAS JSON puro sem markdown:
-{
-  "competicao": "nome da competição",
-  "tabela": [
-    {"posicao": 1, "equipe": "nome", "pontos": 0, "jogos": 0, "vitorias": 0, "empates": 0, "derrotas": 0, "golsPro": 0, "golsContra": 0}
-  ]
-}`
-    : `Analise esta imagem esportiva e extraia os dados visíveis. Retorne APENAS JSON puro sem markdown com os dados encontrados.`;
+  const mt = mediaType || 'image/jpeg';
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -36,12 +28,18 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1500,
+        max_tokens: 2000,
         messages: [{
           role: 'user',
           content: [
-            { type: 'image', source: { type: 'base64', media_type: 'image/png', data: image } },
-            { type: 'text', text: prompt }
+            { type: 'image', source: { type: 'base64', media_type: mt, data: image } },
+            { type: 'text', text: `Esta imagem mostra uma tabela de classificação de futsal brasileiro. Leia todos os dados com atenção.
+
+Extraia TODAS as linhas e retorne APENAS JSON puro sem markdown:
+
+{"competicao":"nome se visível","tabela":[{"posicao":1,"equipe":"nome","pontos":0,"jogos":0,"vitorias":0,"empates":0,"derrotas":0,"golsPro":0,"golsContra":0}]}
+
+Se não houver tabela: {"tabela":[],"erro":"tabela não encontrada"}` }
           ]
         }]
       })
@@ -51,10 +49,8 @@ exports.handler = async (event) => {
     const data = await response.json();
     const text = data.content?.map(b => b.text || '').join('') || '';
     const clean = text.replace(/```json|```/g, '').trim();
-
     let result = {};
-    try { result = JSON.parse(clean); } catch(e) { result = { raw: text }; }
-
+    try { result = JSON.parse(clean); } catch(e) { result = { tabela: [], erro: 'Erro ao extrair', raw: text.substring(0,300) }; }
     return { statusCode: 200, headers, body: JSON.stringify(result) };
   } catch (err) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
