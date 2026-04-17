@@ -22,36 +22,30 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1500,
+        max_tokens: 2000,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
-          content: `Pesquise informações completas sobre a equipe de futsal "${teamName}" no Brasil em 2026. Busque no site futsalparana.com.br, sofascore.com, e outras fontes. Retorne APENAS JSON puro sem markdown:
+          content: `Pesquise dados completos da equipe de futsal "${teamName}" no Brasil em 2026. Busque em futsalparana.com.br, sofascore.com, cbfs.com.br e outras fontes esportivas. Retorne APENAS JSON puro sem markdown, sem texto antes ou depois:
 {
-  "nome": "nome completo",
-  "competicao": "competição atual",
-  "standings": {
-    "position": 0,
-    "points": 0,
-    "played": 0,
-    "wins": 0,
-    "draws": 0,
-    "losses": 0,
-    "goalsFor": 0,
-    "goalsAgainst": 0,
-    "tournament": "nome da competição"
+  "nome": "nome completo da equipe",
+  "competicao": "competição atual em 2026",
+  "classificacao": {
+    "posicao": 0,
+    "pontos": 0,
+    "jogos": 0,
+    "vitorias": 0,
+    "empates": 0,
+    "derrotas": 0,
+    "golsPro": 0,
+    "golsContra": 0,
+    "saldoGols": 0
   },
-  "recentGames": [
-    {"date": "dd/mm", "opponent": "nome", "score": "2 x 1", "result": "V", "home": true, "tournament": "competição"}
+  "forma": "VVDED",
+  "ultimosJogos": [
+    {"data": "dd/mm", "adversario": "nome", "placar": "2 x 1", "resultado": "V", "mandante": true, "competicao": "nome"}
   ],
-  "summary": {
-    "form": "VVDED",
-    "wins": 0,
-    "draws": 0,
-    "losses": 0,
-    "totalGames": 5
-  },
-  "contexto": "resumo do momento atual da equipe, resultados recentes, destaques"
+  "contexto": "resumo do momento atual: posição na tabela, sequência de resultados, destaques, pressão ou confiança da equipe"
 }`
         }]
       })
@@ -62,7 +56,11 @@ exports.handler = async (event) => {
     const clean = text.replace(/```json|```/g, '').trim();
 
     let teamData = {};
-    try { teamData = JSON.parse(clean); } catch(e) { teamData = { contexto: text }; }
+    try {
+      teamData = JSON.parse(clean);
+    } catch(e) {
+      teamData = { nome: teamName, contexto: text.substring(0, 500) };
+    }
 
     return { statusCode: 200, headers, body: JSON.stringify(teamData) };
   } catch (err) {
