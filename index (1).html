@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ScoutRef — Análise Pré-Jogo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --bg2: #1a1d27; --bg3: #22263a;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+    --text: #f0f2f8; --text2: #8b92a8; --text3: #5a6078;
+    --blue: #4f8ef7; --blue-bg: rgba(79,142,247,0.12);
+    --green: #34d399; --green-bg: rgba(52,211,153,0.12);
+    --amber: #fbbf24; --amber-bg: rgba(251,191,36,0.1);
+    --red: #f87171; --red-bg: rgba(248,113,113,0.1);
+    --purple: #a78bfa; --purple-bg: rgba(167,139,250,0.1);
+    --radius: 10px; --radius-lg: 16px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.6; min-height: 100vh; }
+  .wrap { max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  .site-header { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
+  .logo { width: 38px; height: 38px; background: var(--blue); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; }
+  .site-header h1 { font-size: 20px; font-weight: 600; }
+  .site-header p { font-size: 13px; color: var(--text2); }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(79,142,247,0.25); margin-left: auto; }
+  .steps-row { display: flex; gap: 0; margin-bottom: 1.5rem; }
+  .step-dot { flex: 1; text-align: center; font-size: 12px; color: var(--text3); padding-bottom: 6px; border-bottom: 2px solid var(--border); transition: all .2s; cursor: pointer; user-select: none; }
+  .step-dot.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .step-dot.done { color: var(--green); border-bottom-color: var(--green); }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1.25rem; }
+  .field { margin-bottom: 1rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 5px; }
+  .field input, .field textarea { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 14px; padding: 9px 12px; font-family: inherit; transition: border .15s; }
+  .field input:focus, .field textarea:focus { outline: none; border-color: var(--blue); }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .paste-textarea { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 13px; padding: 12px; font-family: inherit; resize: vertical; min-height: 150px; line-height: 1.5; }
+  .paste-textarea:focus { outline: none; border-color: var(--blue); }
+  .extracted-card { background: var(--green-bg); border: 1px solid rgba(52,211,153,0.2); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .ec-title { font-size: 11px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .75rem; }
+  .extracted-match { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .extracted-sub { font-size: 13px; color: var(--text2); margin-bottom: 2px; }
+  .extracted-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .extracted-item { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 8px 10px; }
+  .ei-label { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
+  .ei-value { font-size: 13px; font-weight: 500; }
+  .section-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .75rem; margin-top: 1.25rem; }
+  .section-title:first-child { margin-top: 0; }
+  .team-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .team-panel { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; }
+  .team-panel.home { border-top: 3px solid var(--green); }
+  .team-panel.away { border-top: 3px solid var(--blue); }
+  .tp-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot.home { background: var(--green); }
+  .dot.away { background: var(--blue); }
+  .team-search-wrap { position: relative; }
+  .search-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); z-index: 10; max-height: 200px; overflow-y: auto; margin-top: 4px; }
+  .sri { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background .1s; }
+  .sri:last-child { border-bottom: none; }
+  .sri:hover { background: var(--bg); }
+  .sri-name { font-size: 13px; font-weight: 500; }
+  .sri-sub { font-size: 11px; color: var(--text2); }
+  .team-selected-box { display: flex; align-items: center; gap: 10px; background: var(--green-bg); border: 1px solid rgba(52,211,153,0.25); border-radius: var(--radius); padding: 9px 12px; margin-top: 6px; }
+  .tsb-name { font-size: 13px; font-weight: 600; color: var(--green); flex: 1; }
+  .tsb-clear { font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; }
+  .stats-mini { margin-top: 8px; }
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 6px; }
+  .stat-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px; text-align: center; }
+  .stat-box .sv { font-size: 17px; font-weight: 700; }
+  .stat-box .sl { font-size: 10px; color: var(--text3); margin-top: 1px; }
+  .form-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .fb { width: 24px; height: 24px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+  .fb.V { background: var(--green-bg); color: var(--green); }
+  .fb.E { background: var(--amber-bg); color: var(--amber); }
+  .fb.D { background: var(--red-bg); color: var(--red); }
+  .recent-list { margin-top: 6px; }
+  .gr { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .gr:last-child { border-bottom: none; }
+  .gr-r { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .gr-r.V { background: var(--green-bg); color: var(--green); }
+  .gr-r.E { background: var(--amber-bg); color: var(--amber); }
+  .gr-r.D { background: var(--red-bg); color: var(--red); }
+  .gr-opp { flex: 1; color: var(--text2); }
+  .gr-sc { font-weight: 600; }
+  .gr-loc { font-size: 10px; color: var(--text3); }
+  .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chip { font-size: 12px; padding: 5px 11px; border-radius: 20px; border: 1px solid var(--border); color: var(--text2); cursor: pointer; transition: all .15s; user-select: none; }
+  .chip:hover { border-color: var(--border2); color: var(--text); }
+  .chip.sel { background: var(--amber-bg); color: var(--amber); border-color: rgba(251,191,36,0.3); }
+  .risk-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 8px; }
+  .risk-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; cursor: pointer; transition: all .15s; }
+  .risk-card:hover { border-color: var(--border2); }
+  .risk-card.sel { border-color: rgba(251,191,36,0.4); background: var(--amber-bg); }
+  .risk-card .rn { font-size: 13px; font-weight: 500; }
+  .risk-card .rs { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .moment-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 8px; }
+  .moment-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+  .mc-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .btn-primary { width: 100%; padding: 13px; border-radius: var(--radius); border: none; background: var(--blue); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .15s; margin-top: 1.25rem; }
+  .btn-primary:hover { opacity: .88; }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-outline { width: 100%; padding: 11px; border-radius: var(--radius); border: 1px solid var(--border2); background: transparent; color: var(--text2); font-size: 14px; cursor: pointer; transition: all .15s; margin-top: 8px; }
+  .btn-outline:hover { background: var(--bg3); color: var(--text); }
+  .btn-extract { width: 100%; padding: 11px; border-radius: var(--radius); border: 1px solid rgba(167,139,250,0.3); background: var(--purple-bg); color: var(--purple); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .15s; margin-top: 8px; }
+  .btn-extract:hover { opacity: .85; }
+  .btn-extract:disabled { opacity: .4; cursor: not-allowed; }
+  .loading { display: flex; align-items: center; gap: 10px; color: var(--text2); padding: .75rem 0; font-size: 13px; }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .output-block { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 10px; }
+  .ob-title { font-size: 11px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .75rem; display: flex; justify-content: space-between; align-items: center; }
+  .ob-content { font-size: 14px; line-height: 1.75; color: var(--text); white-space: pre-wrap; }
+  .frase-card { background: var(--blue-bg); border: 1px solid rgba(79,142,247,0.25); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 10px; }
+  .frase-card p { font-size: 16px; font-weight: 600; color: var(--blue); line-height: 1.5; }
+  .copy-btn { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border2); background: transparent; color: var(--text3); cursor: pointer; }
+  .copy-btn:hover { color: var(--text); }
+  .alert { background: var(--red-bg); border: 1px solid rgba(248,113,113,0.2); border-radius: var(--radius); padding: .75rem 1rem; font-size: 13px; color: var(--red); margin-top: .75rem; }
+  .info { background: var(--blue-bg); border: 1px solid rgba(79,142,247,0.15); border-radius: var(--radius); padding: .75rem 1rem; font-size: 13px; color: var(--text2); margin-bottom: 1rem; line-height: 1.5; }
+  .summary-box { background: var(--bg3); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+  .sb-match { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+  .sb-sub { font-size: 13px; color: var(--text2); }
+  .saved-indicator { font-size: 11px; color: var(--green); text-align: right; margin-bottom: .5rem; opacity: 0; transition: opacity .3s; }
+  .saved-indicator.show { opacity: 1; }
+  @media (max-width: 600px) {
+    .grid-2, .grid-3, .team-split, .risk-grid, .moment-grid, .stats-row, .extracted-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="site-header">
+    <div class="logo">SR</div>
+    <div><h1>ScoutRef</h1><p>Análise pré-jogo · Arbitragem de futsal</p></div>
+    <span class="badge">Beta</span>
+  </div>
+  <div class="saved-indicator" id="saved-ind">Salvo automaticamente</div>
+  <div class="steps-row">
+    <div class="step-dot active" onclick="goStep(0)">Escala</div>
+    <div class="step-dot" onclick="goStep(1)">Equipes</div>
+    <div class="step-dot" onclick="goStep(2)">Plano</div>
+    <div class="step-dot" onclick="goStep(3)">Gerar</div>
+  </div>
+
+  <!-- STEP 0 -->
+  <div id="s0">
+    <div class="card">
+      <div class="card-title">Cole a escala do Cadgea</div>
+      <div class="info">Copie o texto da sua escala no Cadgea e cole abaixo. A IA extrai todos os dados automaticamente.</div>
+      <textarea class="paste-textarea" id="escala-text" placeholder="Cole aqui o texto da escala...
+
+Exemplo:
+CAMPEONATO PARANAENSE - SÉRIE PRATA - 2026
+AAEMA MARIÓPOLIS/RP INFO X SÃO JOSEENSE
+18/04/26 20:00 Sábado - ALBERTO PIVA - MARIOPOLIS
+Árbitro 1: ANDERSON VEBER (CBFS)
+Árbitro 2: ANDERSON VINICIUS KWIATKOVSKI (CBFS)
+Anotador: ROSANA MARCARINI (CBFS)
+Cronometrista: ELISANDRA BRUNETO (FPFS)"></textarea>
+      <button class="btn-extract" id="extract-btn" onclick="extrairEscala()">Extrair dados com IA</button>
+      <div id="extract-loading" style="display:none" class="loading"><div class="spinner"></div><span>Extraindo dados da escala...</span></div>
+      <div id="extract-error"></div>
+    </div>
+
+    <div id="extracted-result" style="display:none">
+      <div id="extracted-card" class="extracted-card"></div>
+      <div class="card">
+        <div class="card-title">Confirmar dados</div>
+        <div class="grid-2">
+          <div class="field"><label>Mandante</label><input id="mandante" /></div>
+          <div class="field"><label>Visitante</label><input id="visitante" /></div>
+        </div>
+        <div class="grid-3">
+          <div class="field"><label>Data e hora</label><input id="datahora" /></div>
+          <div class="field"><label>Ginásio</label><input id="ginasio" /></div>
+          <div class="field"><label>Cidade / UF</label><input id="cidade" /></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Competição</label><input id="comp" /></div>
+          <div class="field"><label>Fase / Rodada</label><input id="fase" /></div>
+        </div>
+        <div class="section-title">Equipe de arbitragem</div>
+        <div class="grid-2">
+          <div class="field"><label>Árbitro 1</label><input id="arb1" /></div>
+          <div class="field"><label>Árbitro 2</label><input id="arb2" /></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Anotador(a)</label><input id="anotador" /></div>
+          <div class="field"><label>Cronometrista</label><input id="crono" /></div>
+        </div>
+        <div class="field"><label>Link da transmissão</label><input id="link" placeholder="Deixe em branco se não houver" /></div>
+        <div class="section-title">Orientações logísticas</div>
+        <div class="chips-wrap" id="logistica-chips">
+          <span class="chip" onclick="toggleChip(this)">Inserir link na súmula online</span>
+          <span class="chip" onclick="toggleChip(this)">Conferência de súmula</span>
+          <span class="chip" onclick="toggleChip(this)">Circular de fotógrafos</span>
+          <span class="chip" onclick="toggleChip(this)">Aguardar saída do visitante</span>
+          <span class="chip" onclick="toggleChip(this)">Protocolo antirracismo</span>
+          <span class="chip" onclick="toggleChip(this)">Foto oficial pré-jogo</span>
+          <span class="chip" onclick="toggleChip(this)">Verificar suspensões</span>
+        </div>
+        <div class="field" style="margin-top:1rem"><label>O que está em jogo?</label><input id="emjogo" placeholder="Ex: Mandante sem vitória; visitante briga pela liderança" /></div>
+        <div class="field"><label>Contexto adicional</label><textarea id="contexto" placeholder="Informações extras sobre o jogo..."></textarea></div>
+      </div>
+      <button class="btn-primary" onclick="goStep(1)">Próximo — Buscar equipes →</button>
+      <button class="btn-outline" onclick="novaAnalise()">Nova análise (limpar tudo)</button>
+    </div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="s1" style="display:none">
+    <div class="info">Busque as equipes no SofaScore para carregar classificação e forma recente automaticamente.</div>
+    <div class="team-split">
+      <div class="team-panel home">
+        <div class="tp-label"><span class="dot home"></span><span id="t1-label">Mandante</span></div>
+        <div class="field">
+          <label>Buscar no SofaScore</label>
+          <div class="team-search-wrap">
+            <input id="t1-search" placeholder="Digite o nome..." oninput="searchTeam(this,'t1')" autocomplete="off" />
+            <div id="t1-results" class="search-results" style="display:none"></div>
+          </div>
+          <div id="t1-selected" style="display:none"></div>
+          <div id="t1-stats" class="stats-mini" style="display:none"></div>
+        </div>
+        <div class="field"><label>Perfil tático / comportamental</label><textarea id="t1perfil" placeholder="Como a equipe joga, comportamento..."></textarea></div>
+        <div class="field"><label>Ponto de atenção</label><input id="t1alert" placeholder="Ex: Uso intenso do pivô" /></div>
+        <div class="field"><label>Atleta / técnico a monitorar</label><input id="t1player" placeholder="Ex: João Neto sai da área para reclamar" /></div>
+      </div>
+      <div class="team-panel away">
+        <div class="tp-label"><span class="dot away"></span><span id="t2-label">Visitante</span></div>
+        <div class="field">
+          <label>Buscar no SofaScore</label>
+          <div class="team-search-wrap">
+            <input id="t2-search" placeholder="Digite o nome..." oninput="searchTeam(this,'t2')" autocomplete="off" />
+            <div id="t2-results" class="search-results" style="display:none"></div>
+          </div>
+          <div id="t2-selected" style="display:none"></div>
+          <div id="t2-stats" class="stats-mini" style="display:none"></div>
+        </div>
+        <div class="field"><label>Perfil tático / comportamental</label><textarea id="t2perfil" placeholder="Como a equipe joga, comportamento..."></textarea></div>
+        <div class="field"><label>Ponto de atenção</label><input id="t2alert" placeholder="Ex: Faltas táticas em contra-ataque" /></div>
+        <div class="field"><label>Atleta / técnico a monitorar</label><input id="t2player" placeholder="Ex: Técnico agitado" /></div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="goStep(2)">Próximo — Plano de arbitragem →</button>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="s2" style="display:none">
+    <div class="card">
+      <div class="card-title">Zonas de maior risco</div>
+      <div class="risk-grid">
+        <div class="risk-card" onclick="toggleRisk(this)"><div class="rn">Região do pivô</div><div class="rs">Disputas físicas, sem bola</div></div>
+        <div class="risk-card" onclick="toggleRisk(this)"><div class="rn">Meio de quadra</div><div class="rs">Transições, faltas táticas</div></div>
+        <div class="risk-card" onclick="toggleRisk(this)"><div class="rn">Laterais ofensivas</div><div class="rs">Corredores, infiltrações</div></div>
+        <div class="risk-card" onclick="toggleRisk(this)"><div class="rn">Bancos / área técnica</div><div class="rs">Comportamento comissões</div></div>
+        <div class="risk-card" onclick="toggleRisk(this)"><div class="rn">Contra-ataque</div><div class="rs">Faltas táticas, cartão</div></div>
+        <div class="risk-card" onclick="toggleRisk(this)"><div class="rn">Saída de bola</div><div class="rs">Pressão alta, arremesso</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Momentos críticos</div>
+      <div class="moment-grid">
+        <div class="moment-card">
+          <div class="mc-label">Início</div>
+          <div class="chips-wrap">
+            <span class="chip" onclick="toggleChip(this)">Ritmo acelerado</span>
+            <span class="chip" onclick="toggleChip(this)">Critério físico claro</span>
+            <span class="chip" onclick="toggleChip(this)">Comunicação preventiva</span>
+            <span class="chip" onclick="toggleChip(this)">Presença forte</span>
+            <span class="chip" onclick="toggleChip(this)">Pressão do ambiente</span>
+          </div>
+        </div>
+        <div class="moment-card">
+          <div class="mc-label">Durante</div>
+          <div class="chips-wrap">
+            <span class="chip" onclick="toggleChip(this)">Faltas acumuladas</span>
+            <span class="chip" onclick="toggleChip(this)">Controle dos bancos</span>
+            <span class="chip" onclick="toggleChip(this)">Consistência decisões</span>
+            <span class="chip" onclick="toggleChip(this)">Gestão pós-gol</span>
+            <span class="chip" onclick="toggleChip(this)">Comunicação interna</span>
+          </div>
+        </div>
+        <div class="moment-card">
+          <div class="mc-label">Final</div>
+          <div class="chips-wrap">
+            <span class="chip" onclick="toggleChip(this)">Jogo mais físico</span>
+            <span class="chip" onclick="toggleChip(this)">Gestão emocional</span>
+            <span class="chip" onclick="toggleChip(this)">Contra-ataques</span>
+            <span class="chip" onclick="toggleChip(this)">Disciplina ativa</span>
+            <span class="chip" onclick="toggleChip(this)">Faltas táticas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Objetivo da equipe</div>
+      <div class="field"><textarea id="objetivo" style="min-height:60px" placeholder="Ex: Arbitragem preventiva. Critério claro no físico. Controle firme dos bancos."></textarea></div>
+    </div>
+    <button class="btn-primary" onclick="goStep(3)">Próximo — Gerar análise →</button>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="s3" style="display:none">
+    <div class="summary-box" id="summary-box"></div>
+    <button class="btn-primary" id="gen-btn" onclick="gerarAnalise()">Gerar análise completa com IA</button>
+    <div id="output-area" style="margin-top:1.5rem;display:none">
+      <div class="loading" id="loading-row"><div class="spinner"></div><span>Gerando análise pré-jogo...</span></div>
+      <div id="result-blocks"></div>
+      <button class="btn-outline" onclick="novaAnalise()" style="margin-top:1rem">Nova análise</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = { t1:null, t2:null, t1Stats:null, t2Stats:null };
+let searchTimers = {};
+let saveTimer = null;
+
+function showSaved() {
+  const el = document.getElementById('saved-ind');
+  el.classList.add('show');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>el.classList.remove('show'), 2000);
+}
+
+function saveState() {
+  const fields = ['escala-text','mandante','visitante','datahora','ginasio','cidade','comp','fase','arb1','arb2','anotador','crono','link','emjogo','contexto','t1perfil','t1alert','t1player','t2perfil','t2alert','t2player','objetivo'];
+  const data = {};
+  fields.forEach(id => { const el=document.getElementById(id); if(el) data[id]=el.value; });
+  data.chips = [...document.querySelectorAll('.chip.sel')].map(c=>c.textContent);
+  data.risks = [...document.querySelectorAll('.risk-card.sel')].map(c=>c.querySelector('.rn').textContent);
+  data.t1=state.t1; data.t2=state.t2; data.t1Stats=state.t1Stats; data.t2Stats=state.t2Stats;
+  data.extracted = document.getElementById('extracted-result').style.display !== 'none';
+  data.extractedHTML = document.getElementById('extracted-card').innerHTML;
+  try { localStorage.setItem('scoutref_v2', JSON.stringify(data)); showSaved(); } catch(e){}
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('scoutref_v2');
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    const fields = ['escala-text','mandante','visitante','datahora','ginasio','cidade','comp','fase','arb1','arb2','anotador','crono','link','emjogo','contexto','t1perfil','t1alert','t1player','t2perfil','t2alert','t2player','objetivo'];
+    fields.forEach(id => { const el=document.getElementById(id); if(el && data[id]) el.value=data[id]; });
+    if (data.chips) data.chips.forEach(txt => { document.querySelectorAll('.chip').forEach(c=>{ if(c.textContent===txt) c.classList.add('sel'); }); });
+    if (data.risks) data.risks.forEach(txt => { document.querySelectorAll('.risk-card .rn').forEach(rn=>{ if(rn.textContent===txt) rn.closest('.risk-card').classList.add('sel'); }); });
+    if (data.t1) { state.t1=data.t1; renderSelectedTeam('t1',data.t1); }
+    if (data.t2) { state.t2=data.t2; renderSelectedTeam('t2',data.t2); }
+    if (data.t1Stats) { state.t1Stats=data.t1Stats; renderTeamStats('t1',data.t1Stats); }
+    if (data.t2Stats) { state.t2Stats=data.t2Stats; renderTeamStats('t2',data.t2Stats); }
+    if (data.extracted) {
+      document.getElementById('extracted-card').innerHTML = data.extractedHTML || '';
+      document.getElementById('extracted-result').style.display = 'block';
+    }
+    if (data.mandante) document.getElementById('t1-label').textContent = data.mandante;
+    if (data.visitante) document.getElementById('t2-label').textContent = data.visitante;
+  } catch(e){}
+}
+
+function novaAnalise() {
+  if (!confirm('Limpar tudo e começar nova análise?')) return;
+  localStorage.removeItem('scoutref_v2');
+  location.reload();
+}
+
+function goStep(n) {
+  ['s0','s1','s2','s3'].forEach((id,i)=>{
+    document.getElementById(id).style.display = i===n?'block':'none';
+    const dot=document.querySelectorAll('.step-dot')[i];
+    dot.classList.toggle('active',i===n);
+    dot.classList.toggle('done',i<n);
+  });
+  if(n===3) buildSummary();
+  window.scrollTo(0,0);
+}
+
+async function extrairEscala() {
+  const text = document.getElementById('escala-text').value.trim();
+  if (!text) { alert('Cole o texto da escala primeiro.'); return; }
+  document.getElementById('extract-btn').disabled=true;
+  document.getElementById('extract-loading').style.display='flex';
+  document.getElementById('extract-error').innerHTML='';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:800,
+        messages:[{role:'user',content:`Extraia os dados desta escala de arbitragem de futsal. Retorne APENAS JSON puro, sem markdown nem texto extra:
+
+${text}
+
+Formato exato:
+{"mandante":"","visitante":"","datahora":"","ginasio":"","cidade":"","comp":"","fase":"","arb1":"","arb2":"","anotador":"","crono":""}`}]
+      })
+    });
+    const data = await resp.json();
+    const raw = data.content?.map(b=>b.text||'').join('')||'';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const fields = ['mandante','visitante','datahora','ginasio','cidade','comp','fase','arb1','arb2','anotador','crono'];
+    fields.forEach(f=>{ const el=document.getElementById(f); if(el&&parsed[f]) el.value=parsed[f]; });
+    document.getElementById('t1-label').textContent = parsed.mandante||'Mandante';
+    document.getElementById('t2-label').textContent = parsed.visitante||'Visitante';
+    document.getElementById('extracted-card').innerHTML=`
+      <div class="ec-title">Escala extraída com sucesso</div>
+      <div class="extracted-match">${parsed.mandante||'—'} × ${parsed.visitante||'—'}</div>
+      <div class="extracted-sub">${parsed.comp||''} ${parsed.fase?'· '+parsed.fase:''}</div>
+      <div class="extracted-grid">
+        <div class="extracted-item"><div class="ei-label">Data e hora</div><div class="ei-value">${parsed.datahora||'—'}</div></div>
+        <div class="extracted-item"><div class="ei-label">Ginásio / Cidade</div><div class="ei-value">${parsed.ginasio||'—'}</div></div>
+        <div class="extracted-item"><div class="ei-label">Árbitro 1</div><div class="ei-value">${parsed.arb1||'—'}</div></div>
+        <div class="extracted-item"><div class="ei-label">Árbitro 2</div><div class="ei-value">${parsed.arb2||'—'}</div></div>
+      </div>`;
+    document.getElementById('extracted-result').style.display='block';
+    saveState();
+  } catch(e) {
+    document.getElementById('extract-error').innerHTML=`<div class="alert">Erro ao extrair: ${e.message}. Verifique o texto e tente novamente.</div>`;
+    document.getElementById('extracted-result').style.display='block';
+  }
+  document.getElementById('extract-loading').style.display='none';
+  document.getElementById('extract-btn').disabled=false;
+}
+
+async function searchTeam(input, team) {
+  const q=input.value.trim();
+  const resultsEl=document.getElementById(`${team}-results`);
+  clearTimeout(searchTimers[team]);
+  if(q.length<2){resultsEl.style.display='none';return;}
+  searchTimers[team]=setTimeout(async()=>{
+    try {
+      const res=await fetch(`/.netlify/functions/search-teams?query=${encodeURIComponent(q)}`);
+      const data=await res.json();
+      const teams=data.teams||[];
+      if(!teams.length){resultsEl.style.display='none';return;}
+      resultsEl.innerHTML=teams.map(t=>`<div class="sri" onclick='selectTeam("${team}",${JSON.stringify(t).replace(/'/g,"&#39;")})'>
+        <div class="sri-name">${t.name}</div><div class="sri-sub">${t.country}${t.sport?' · '+t.sport:''}</div></div>`).join('');
+      resultsEl.style.display='block';
+    } catch(e){resultsEl.style.display='none';}
+  },350);
+}
+
+async function selectTeam(team, teamObj) {
+  state[team]=teamObj;
+  document.getElementById(`${team}-results`).style.display='none';
+  document.getElementById(`${team}-search`).value='';
+  renderSelectedTeam(team, teamObj);
+  await loadTeamStats(team, teamObj.id);
+  saveState();
+}
+
+function renderSelectedTeam(team, teamObj) {
+  const el=document.getElementById(`${team}-selected`);
+  el.style.display='block';
+  el.innerHTML=`<div class="team-selected-box"><div class="tsb-name">${teamObj.name}</div><button class="tsb-clear" onclick="clearTeam('${team}')">Trocar</button></div>`;
+}
+
+function clearTeam(team) {
+  state[team]=null; state[`${team}Stats`]=null;
+  document.getElementById(`${team}-selected`).style.display='none';
+  document.getElementById(`${team}-stats`).style.display='none';
+  document.getElementById(`${team}-search`).value='';
+  saveState();
+}
+
+async function loadTeamStats(team, teamId) {
+  const el=document.getElementById(`${team}-stats`);
+  el.style.display='block';
+  el.innerHTML='<div class="loading"><div class="spinner"></div><span>Carregando dados...</span></div>';
+  try {
+    const res=await fetch(`/.netlify/functions/team-data?teamId=${teamId}`);
+    const data=await res.json();
+    state[`${team}Stats`]=data;
+    renderTeamStats(team,data);
+    saveState();
+  } catch(e){ el.innerHTML='<div style="font-size:12px;color:var(--text2);padding:6px 0">Dados não disponíveis.</div>'; }
+}
+
+function renderTeamStats(team, data) {
+  const el=document.getElementById(`${team}-stats`);
+  el.style.display='block';
+  const s=data.standings; const games=data.recentGames||[]; const form=data.summary?.form||'';
+  let html='';
+  if(s) html+=`<div class="stats-row"><div class="stat-box"><div class="sv">${s.position}º</div><div class="sl">Posição</div></div><div class="stat-box"><div class="sv">${s.points}</div><div class="sl">Pontos</div></div><div class="stat-box"><div class="sv">${s.goalsFor}</div><div class="sl">Gols</div></div><div class="stat-box"><div class="sv">${s.goalsAgainst}</div><div class="sl">Sofridos</div></div></div>`;
+  if(form) html+=`<div class="form-row" style="margin:6px 0">${form.split('').map(r=>`<div class="fb ${r}">${r}</div>`).join('')}</div>`;
+  if(games.length){html+=`<div class="recent-list">`;games.forEach(g=>{html+=`<div class="gr"><div class="gr-r ${g.result}">${g.result}</div><div class="gr-opp">${g.opponent}</div><div class="gr-sc">${g.score}</div><div class="gr-loc">${g.home?'Casa':'Fora'}</div></div>`;});html+=`</div>`;}
+  el.innerHTML=html||'<div style="font-size:12px;color:var(--text2)">Sem dados disponíveis.</div>';
+}
+
+function toggleChip(el){el.classList.toggle('sel');saveState();}
+function toggleRisk(el){el.classList.toggle('sel');saveState();}
+function getSelChips(id){return[...document.querySelectorAll(`#${id} .chip.sel`)].map(c=>c.textContent).join(', ');}
+function getRisks(){return[...document.querySelectorAll('.risk-card.sel')].map(c=>c.querySelector('.rn').textContent).join(', ');}
+
+function buildSummary(){
+  document.getElementById('summary-box').innerHTML=`
+    <div class="sb-match">${document.getElementById('mandante').value||'Mandante'} × ${document.getElementById('visitante').value||'Visitante'}</div>
+    <div class="sb-sub">${document.getElementById('comp').value||'Competição'} · ${document.getElementById('fase').value||'Rodada'} · ${document.getElementById('datahora').value||'Data'}</div>
+    <div class="sb-sub" style="margin-top:4px">Árbitro principal: ${document.getElementById('arb1').value||'—'}</div>`;
+}
+
+function formatStats(data,name){
+  if(!data) return `${name}: sem dados estatísticos`;
+  let t='';
+  if(data.standings){const s=data.standings;t+=`${s.position}º — ${s.points}pts (${s.played}J: ${s.wins}V ${s.draws}E ${s.losses}D) | Gols: ${s.goalsFor}/${s.goalsAgainst}\n`;}
+  if(data.summary?.form) t+=`Forma: ${data.summary.form}\n`;
+  if(data.recentGames?.length){t+=`Últimos jogos:\n`;data.recentGames.forEach(g=>{t+=`  ${g.date} ${g.home?'Casa':'Fora'} vs ${g.opponent}: ${g.score} (${g.result})\n`;});}
+  return t||`${name}: sem dados`;
+}
+
+async function gerarAnalise(){
+  document.getElementById('output-area').style.display='block';
+  document.getElementById('loading-row').style.display='flex';
+  document.getElementById('result-blocks').innerHTML='';
+  document.getElementById('gen-btn').disabled=true;
+  const momentCards=document.querySelectorAll('.moment-card');
+  const mc={i:'',d:'',f:''};
+  const mk=['i','d','f'];
+  momentCards.forEach((c,i)=>{mc[mk[i]]=[...c.querySelectorAll('.chip.sel')].map(ch=>ch.textContent).join(', ');});
+  const payload={
+    matchData:{comp:document.getElementById('comp').value,fase:document.getElementById('fase').value,datahora:document.getElementById('datahora').value,ginasio:document.getElementById('ginasio').value,cidade:document.getElementById('cidade').value,mandante:document.getElementById('mandante').value,visitante:document.getElementById('visitante').value,emjogo:document.getElementById('emjogo').value,contexto:document.getElementById('contexto').value},
+    arbData:{arb1:document.getElementById('arb1').value,arb2:document.getElementById('arb2').value,anotador:document.getElementById('anotador').value,crono:document.getElementById('crono').value,link:document.getElementById('link').value,logistica:getSelChips('logistica-chips'),t1perfil:document.getElementById('t1perfil').value,t1alert:document.getElementById('t1alert').value,t1player:document.getElementById('t1player').value,t2perfil:document.getElementById('t2perfil').value,t2alert:document.getElementById('t2alert').value,t2player:document.getElementById('t2player').value},
+    team1Data:state.t1Stats, team2Data:state.t2Stats,
+    planData:{riscos:getRisks(),mcInicio:mc.i,mcMeio:mc.d,mcFinal:mc.f,objetivo:document.getElementById('objetivo').value}
+  };
+  try {
+    const res=await fetch('/.netlify/functions/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    document.getElementById('loading-row').style.display='none';
+    if(data.error) throw new Error(data.error);
+    const text=data.analysis||'';
+    const blocks=text.split(/\n(?=\d+\.\s+[A-ZÁÉÍÓÚ]|FRASE)/g);
+    let html='';
+    blocks.forEach(block=>{
+      const lines=block.trim().split('\n');
+      const title=lines[0].replace(/^\d+\.\s*/,'').trim();
+      const body=lines.slice(1).join('\n').trim();
+      if(title.toUpperCase().includes('FRASE')){
+        html+=`<div class="frase-card"><div style="font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Frase-chave</div><p>${body||title}</p></div>`;
+      } else {
+        html+=`<div class="output-block"><div class="ob-title">${title}<button class="copy-btn" onclick="copyBlock(this)">Copiar</button></div><div class="ob-content">${body.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div></div>`;
+      }
+    });
+    document.getElementById('result-blocks').innerHTML=html||`<div class="output-block"><div class="ob-content">${text.replace(/\n/g,'<br>')}</div></div>`;
+  } catch(e){
+    document.getElementById('loading-row').style.display='none';
+    document.getElementById('result-blocks').innerHTML=`<div class="alert">Erro: ${e.message}</div>`;
+  }
+  document.getElementById('gen-btn').disabled=false;
+}
+
+function copyBlock(btn){
+  const text=btn.closest('.output-block').querySelector('.ob-content').innerText;
+  navigator.clipboard.writeText(text).then(()=>{btn.textContent='Copiado!';setTimeout(()=>btn.textContent='Copiar',1500);});
+}
+
+document.addEventListener('click', e=>{
+  ['t1','t2'].forEach(t=>{
+    const wrap=document.getElementById(`${t}-search`)?.closest('.team-search-wrap');
+    if(wrap&&!wrap.contains(e.target)){const r=document.getElementById(`${t}-results`);if(r)r.style.display='none';}
+  });
+  saveState();
+});
+document.addEventListener('input', saveState);
+
+loadState();
+</script>
+</body>
+</html>
