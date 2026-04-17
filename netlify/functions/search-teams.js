@@ -4,43 +4,60 @@ exports.handler = async (event) => {
     'Content-Type': 'application/json'
   };
 
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
-  }
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
   const { query } = event.queryStringParameters || {};
-  if (!query) {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Query obrigatória' }) };
-  }
+  if (!query) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Query obrigatória' }) };
+
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!ANTHROPIC_KEY) return { statusCode: 500, headers, body: JSON.stringify({ error: 'Chave não configurada' }) };
 
   try {
-    const response = await fetch(
-      `https://www.sofascore.com/api/v1/search/all?q=${encodeURIComponent(query)}&page=0`,
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'application/json',
-          'Referer': 'https://www.sofascore.com/'
-        }
-      }
-    );
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{
+          role: 'user',
+          content: `Pesquise dados da equipe de futsal "${query}" no Brasil. Busque classificação atual, últimos 5 jogos e informações gerais. Retorne APENAS JSON puro sem markdown:
+{
+  "nome": "nome completo da equipe",
+  "competicao": "competição atual",
+  "classificacao": {
+    "posicao": 0,
+    "pontos": 0,
+    "jogos": 0,
+    "vitorias": 0,
+    "empates": 0,
+    "derrotas": 0,
+    "golsPro": 0,
+    "golsContra": 0
+  },
+  "forma": "VVDED",
+  "ultimosJogos": [
+    {"data": "", "adversario": "", "placar": "", "resultado": "V/E/D", "mandante": true}
+  ],
+  "observacoes": "informações relevantes sobre o momento da equipe"
+}`
+        }]
+      })
+    });
 
-    if (!response.ok) throw new Error('SofaScore indisponível');
     const data = await response.json();
-
-    const teams = (data.results || [])
-      .filter(r => r.type === 'team')
-      .slice(0, 8)
-      .map(r => ({
-        id: r.entity.id,
-        name: r.entity.name,
-        shortName: r.entity.shortName || r.entity.name,
-        country: r.entity.country?.name || '',
-        sport: r.entity.sport?.name || ''
-      }))
-      .filter(t => t.sport === 'Futsal' || t.sport === 'Football' || t.sport === '');
-
-    return { statusCode: 200, headers, body: JSON.stringify({ teams }) };
+    const text = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    
+    let teamData = {};
+    try { teamData = JSON.parse(clean); } catch(e) { teamData = { nome: query, observacoes: text }; }
+    
+    return { statusCode: 200, headers, body: JSON.stringify({ team: teamData }) };
   } catch (err) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
