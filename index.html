@@ -510,8 +510,6 @@ async function extrair(){
     D.ex=p;
     document.getElementById('t1-label').textContent='🟢 '+(p.mandante||'Mandante');
     document.getElementById('t2-label').textContent='🔵 '+(p.visitante||'Visitante');
-    document.getElementById('t1-q').value=p.mandante||'';
-    document.getElementById('t2-q').value=p.visitante||'';
     document.getElementById('ext-card').innerHTML=`
       <div class="ext-title">Escala extraída com sucesso</div>
       <div class="ext-match">${p.mandante||'—'} × ${p.visitante||'—'}</div>
