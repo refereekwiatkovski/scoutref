@@ -13,7 +13,25 @@ exports.handler = async (event) => {
   let body;
   try { body = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: JSON.stringify({ error: 'JSON inválido' }) }; }
 
-  const { matchData, arbData, team1Data, team2Data, planData } = body;
+  const { matchData, arbData, team1Data, team2Data, planData, matchContext } = body;
+
+  const formatMatchContext = (ctx) => {
+    if (!ctx) return '';
+    let t = '';
+    if (ctx.classificacaoGeral?.tabela?.length) {
+      t += `Classificação (${ctx.classificacaoGeral.competicao || ''}):\n`;
+      ctx.classificacaoGeral.tabela.slice(0, 8).forEach(r => {
+        t += `  ${r.posicao}º ${r.equipe} — ${r.pontos}pts (${r.vitorias}V ${r.empates}E ${r.derrotas}D)\n`;
+      });
+    }
+    if (ctx.confrontoDireto) {
+      const c = ctx.confrontoDireto;
+      t += `\nConfrontos diretos: ${c.totalJogos || 0} jogos — ${c.vitoriasMandante||0}V ${c.empates||0}E ${c.vitoriasVisitante||0}D\n`;
+      if (c.resumo) t += c.resumo + '\n';
+    }
+    if (ctx.contextoConfrontoAtual) t += '\n' + ctx.contextoConfrontoAtual;
+    return t;
+  };
 
   const formatStats = (data, name) => {
     if (!data) return `${name}: sem dados estatísticos`;
@@ -48,19 +66,27 @@ ARBITRAGEM:
 Anotador(a): ${arbData.anotador} | Cronometrista: ${arbData.crono}
 Orientações: ${arbData.logistica}
 
+CONTEXTO DO CONFRONTO:
+${formatMatchContext(matchContext)}
+
 MANDANTE — ${matchData.mandante}:
-${formatStats(team1Data, matchData.mandante)}
+Classificação: ${arbData.t1class || 'não informada'}
+Últimos jogos: ${arbData.t1jogos || 'não informados'}
 Perfil tático: ${arbData.t1tatico}
 Comportamento: ${arbData.t1comportamento}
 Pontos de atenção: ${arbData.t1atencao}
 Atleta/técnico a monitorar: ${arbData.t1player}
 
 VISITANTE — ${matchData.visitante}:
-${formatStats(team2Data, matchData.visitante)}
+Classificação: ${arbData.t2class || 'não informada'}
+Últimos jogos: ${arbData.t2jogos || 'não informados'}
 Perfil tático: ${arbData.t2tatico}
 Comportamento: ${arbData.t2comportamento}
 Pontos de atenção: ${arbData.t2atencao}
 Atleta/técnico a monitorar: ${arbData.t2player}
+
+CONFRONTO DIRETO:
+${arbData.confronto || 'não informado'}
 
 PLANO:
 Zonas de risco: ${planData.riscos}
