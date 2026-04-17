@@ -64,7 +64,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   transition:background 0.15s, color 0.15s, border-color 0.15s;
 }
 .chip:hover{border-color:var(--border2);color:var(--text);background:var(--bg3)}
-.chip.ativo{background:var(--amber-bg);color:var(--amber);border-color:rgba(251,191,36,0.4)}
+.chip.ativo{background:var(--amber-bg) !important;color:var(--amber) !important;border-color:rgba(251,191,36,0.4) !important}
+.chip.ativo:hover{background:var(--amber-bg) !important;color:var(--amber) !important;border-color:rgba(251,191,36,0.6) !important}
 
 .team-split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .team-panel{border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem}
@@ -489,18 +490,17 @@ function loadState(){
     ['escala-text','contexto','link','t1player','t2player','objetivo'].forEach(id=>{
       const e=document.getElementById(id);if(e&&d[id])e.value=d[id];
     });
-    if(d.ativos){
-      d.ativos.forEach(txt=>{
-        document.querySelectorAll('.chip').forEach(c=>{
-          if(c.textContent.trim()===txt.trim())c.classList.add('ativo');
-        });
+    // chips e risks restaurados separadamente para evitar conflito
+    if(d.ativos && Array.isArray(d.ativos)){
+      const chipEls = document.querySelectorAll('.chip');
+      chipEls.forEach(c=>{
+        if(d.ativos.includes(c.textContent.trim())) c.classList.add('ativo');
       });
     }
-    if(d.risks){
-      d.risks.forEach(txt=>{
-        document.querySelectorAll('.risk-card .rn').forEach(rn=>{
-          if(rn.textContent.trim()===txt.trim())rn.closest('.risk-card').classList.add('ativo');
-        });
+    if(d.risks && Array.isArray(d.risks)){
+      document.querySelectorAll('.risk-card').forEach(rc=>{
+        const rn = rc.querySelector('.rn');
+        if(rn && d.risks.includes(rn.textContent.trim())) rc.classList.add('ativo');
       });
     }
     if(d.t1){ST.t1=d.t1;renderSel('t1',d.t1);}
