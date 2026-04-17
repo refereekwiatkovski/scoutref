@@ -4,83 +4,67 @@ exports.handler = async (event) => {
     'Content-Type': 'application/json'
   };
 
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
-  }
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
-  const { teamId } = event.queryStringParameters || {};
-  if (!teamId) {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'teamId obrigatório' }) };
-  }
+  const { teamName } = event.queryStringParameters || {};
+  if (!teamName) return { statusCode: 400, headers, body: JSON.stringify({ error: 'teamName obrigatório' }) };
 
-  const sfHeaders = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    'Accept': 'application/json',
-    'Referer': 'https://www.sofascore.com/'
-  };
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!ANTHROPIC_KEY) return { statusCode: 500, headers, body: JSON.stringify({ error: 'Chave não configurada' }) };
 
   try {
-    const [eventsRes, standingsRes] = await Promise.allSettled([
-      fetch(`https://www.sofascore.com/api/v1/team/${teamId}/events/last/0`, { headers: sfHeaders }),
-      fetch(`https://www.sofascore.com/api/v1/team/${teamId}/standings`, { headers: sfHeaders })
-    ]);
-
-    let recentGames = [];
-    if (eventsRes.status === 'fulfilled' && eventsRes.value.ok) {
-      const evData = await eventsRes.value.json();
-      recentGames = (evData.events || []).slice(-5).map(e => {
-        const isHome = e.homeTeam?.id == teamId;
-        const myScore = isHome ? e.homeScore?.current : e.awayScore?.current;
-        const oppScore = isHome ? e.awayScore?.current : e.homeScore?.current;
-        const opponent = isHome ? e.awayTeam?.name : e.homeTeam?.name;
-        let result = 'E';
-        if (myScore > oppScore) result = 'V';
-        if (myScore < oppScore) result = 'D';
-        return {
-          date: e.startTimestamp ? new Date(e.startTimestamp * 1000).toLocaleDateString('pt-BR') : '',
-          opponent,
-          score: `${myScore} x ${oppScore}`,
-          result,
-          home: isHome,
-          tournament: e.tournament?.name || ''
-        };
-      });
-    }
-
-    let standings = null;
-    if (standingsRes.status === 'fulfilled' && standingsRes.value.ok) {
-      const stData = await standingsRes.value.json();
-      const allRows = stData.standings?.flatMap(s => s.rows || []) || [];
-      const row = allRows.find(r => r.team?.id == teamId);
-      if (row) {
-        standings = {
-          position: row.position,
-          points: row.points,
-          played: row.matches,
-          wins: row.wins,
-          draws: row.draws,
-          losses: row.losses,
-          goalsFor: row.scoresFor,
-          goalsAgainst: row.scoresAgainst,
-          tournament: stData.standings?.[0]?.tournament?.name || ''
-        };
-      }
-    }
-
-    const wins = recentGames.filter(g => g.result === 'V').length;
-    const draws = recentGames.filter(g => g.result === 'E').length;
-    const losses = recentGames.filter(g => g.result === 'D').length;
-    const form = recentGames.map(g => g.result).join('');
-
-    return {
-      statusCode: 200,
-      headers,
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01'
+      },
       body: JSON.stringify({
-        recentGames,
-        standings,
-        summary: { form, wins, draws, losses, totalGames: recentGames.length }
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1500,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{
+          role: 'user',
+          content: `Pesquise informações completas sobre a equipe de futsal "${teamName}" no Brasil em 2026. Busque no site futsalparana.com.br, sofascore.com, e outras fontes. Retorne APENAS JSON puro sem markdown:
+{
+  "nome": "nome completo",
+  "competicao": "competição atual",
+  "standings": {
+    "position": 0,
+    "points": 0,
+    "played": 0,
+    "wins": 0,
+    "draws": 0,
+    "losses": 0,
+    "goalsFor": 0,
+    "goalsAgainst": 0,
+    "tournament": "nome da competição"
+  },
+  "recentGames": [
+    {"date": "dd/mm", "opponent": "nome", "score": "2 x 1", "result": "V", "home": true, "tournament": "competição"}
+  ],
+  "summary": {
+    "form": "VVDED",
+    "wins": 0,
+    "draws": 0,
+    "losses": 0,
+    "totalGames": 5
+  },
+  "contexto": "resumo do momento atual da equipe, resultados recentes, destaques"
+}`
+        }]
       })
-    };
+    });
+
+    const data = await response.json();
+    const text = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+
+    let teamData = {};
+    try { teamData = JSON.parse(clean); } catch(e) { teamData = { contexto: text }; }
+
+    return { statusCode: 200, headers, body: JSON.stringify(teamData) };
   } catch (err) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
