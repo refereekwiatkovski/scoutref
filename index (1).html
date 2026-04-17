@@ -387,7 +387,13 @@ async function extrairEscala() {
   document.getElementById('extract-error').innerHTML='';
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('/.netlify/functions/extract-escala', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ text })
+});
+const parsed = await resp.json();
+if (parsed.error) throw new Error(parsed.error);
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -401,9 +407,6 @@ Formato exato:
 {"mandante":"","visitante":"","datahora":"","ginasio":"","cidade":"","comp":"","fase":"","arb1":"","arb2":"","anotador":"","crono":""}`}]
       })
     });
-    const data = await resp.json();
-    const raw = data.content?.map(b=>b.text||'').join('')||'';
-    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
     const fields = ['mandante','visitante','datahora','ginasio','cidade','comp','fase','arb1','arb2','anotador','crono'];
     fields.forEach(f=>{ const el=document.getElementById(f); if(el&&parsed[f]) el.value=parsed[f]; });
     document.getElementById('t1-label').textContent = parsed.mandante||'Mandante';
