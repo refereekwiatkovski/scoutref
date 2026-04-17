@@ -464,19 +464,16 @@ function tc(el){
 }
 
 function sv(){
-  clearTimeout(saveT);
-  saveT=setTimeout(()=>{
-    const fields=['escala-text','contexto','link','t1player','t2player','objetivo'];
-    const d={};
-    fields.forEach(id=>{const e=document.getElementById(id);if(e)d[id]=e.value;});
-    d.ativos=[...document.querySelectorAll('.chip.ativo')].map(c=>c.textContent);
-    d.risks=[...document.querySelectorAll('.risk-card.ativo')].map(c=>c.querySelector('.rn').textContent);
-    d.t1=ST.t1;d.t2=ST.t2;d.t1s=ST.t1s;d.t2s=ST.t2s;
-    d.analysis=ST.analysis;d.ex=ST.ex;
-    d.extracted=document.getElementById('extracted-result').style.display!=='none';
-    d.extractedHTML=document.getElementById('extracted-card').innerHTML;
-    try{localStorage.setItem('sr4',JSON.stringify(d));showSaved();}catch(e){}
-  },500);
+  const fields=['escala-text','contexto','link','t1player','t2player','objetivo'];
+  const d={};
+  fields.forEach(id=>{const e=document.getElementById(id);if(e)d[id]=e.value;});
+  d.ativos=[...document.querySelectorAll('.chip.ativo')].map(c=>c.textContent.trim());
+  d.risks=[...document.querySelectorAll('.risk-card.ativo')].map(c=>c.querySelector('.rn').textContent.trim());
+  d.t1=ST.t1;d.t2=ST.t2;d.t1s=ST.t1s;d.t2s=ST.t2s;
+  d.analysis=ST.analysis;d.ex=ST.ex;
+  d.extracted=document.getElementById('extracted-result').style.display!=='none';
+  d.extractedHTML=document.getElementById('extracted-card').innerHTML;
+  try{localStorage.setItem('sr4',JSON.stringify(d));}catch(e){}
 }
 
 function showSaved(){
@@ -785,16 +782,15 @@ async function gerarPDF(){
 }
 
 document.addEventListener('click',e=>{
-  // Fechar busca ao clicar fora
   ['t1','t2'].forEach(t=>{
     const w=document.getElementById(`${t}-search`)?.closest('.team-search-wrap');
     if(w&&!w.contains(e.target)){const r=document.getElementById(`${t}-results`);if(r)r.style.display='none';}
   });
-  // Salvar após qualquer clique
-  sv();
 });
 document.addEventListener('input',sv);
 window.addEventListener('beforeunload',sv);
+// Salva a cada 3 segundos automaticamente
+setInterval(sv, 3000);
 
 loadState();
 </script>
