@@ -253,12 +253,15 @@ body{background:#0f1117;color:#f0f2f8;font-family:-apple-system,BlinkMacSystemFo
       <div class="team-panel home">
         <div class="team-label" id="t1-label">🟢 Mandante</div>
         <div class="field">
-          <label>Buscar performance com IA</label>
-          <input class="search-input" id="t1-q" placeholder="Digite o nome da equipe..."/>
-          <button class="search-btn" onclick="buscarTime('t1')" id="t1-btn">Buscar com IA</button>
+          <label>Print do SofaScore / FPFS</label>
+          <div onclick="document.getElementById('img-t1').click()" style="border:1.5px dashed rgba(52,211,153,0.3);border-radius:10px;padding:.75rem;text-align:center;cursor:pointer;font-size:12px;color:#8b92a8">
+            📷 Clique para enviar o print da equipe
+          </div>
+          <input type="file" id="img-t1" accept="image/*" onchange="uploadEquipe(this,'t1')" style="display:none"/>
+          <img id="img-t1-preview" style="display:none;width:100%;border-radius:8px;margin-top:6px;max-height:120px;object-fit:contain"/>
+          <div id="t1-loading" style="display:none" class="loading"><div class="spin"></div><span>Lendo com IA...</span></div>
+          <div id="t1-stats" style="display:none;margin-top:8px"></div>
         </div>
-        <div id="t1-chosen" style="display:none"></div>
-        <div id="t1-stats" style="display:none"></div>
         <div class="sec">Perfil tático</div>
         <div class="chips" id="t1a">
           <span onclick="flip(this)">Jogo com pivô</span>
@@ -304,12 +307,15 @@ body{background:#0f1117;color:#f0f2f8;font-family:-apple-system,BlinkMacSystemFo
       <div class="team-panel away">
         <div class="team-label" id="t2-label">🔵 Visitante</div>
         <div class="field">
-          <label>Buscar performance com IA</label>
-          <input class="search-input" id="t2-q" placeholder="Digite o nome da equipe..."/>
-          <button class="search-btn" onclick="buscarTime('t2')" id="t2-btn">Buscar com IA</button>
+          <label>Print do SofaScore / FPFS</label>
+          <div onclick="document.getElementById('img-t2').click()" style="border:1.5px dashed rgba(79,142,247,0.3);border-radius:10px;padding:.75rem;text-align:center;cursor:pointer;font-size:12px;color:#8b92a8">
+            📷 Clique para enviar o print da equipe
+          </div>
+          <input type="file" id="img-t2" accept="image/*" onchange="uploadEquipe(this,'t2')" style="display:none"/>
+          <img id="img-t2-preview" style="display:none;width:100%;border-radius:8px;margin-top:6px;max-height:120px;object-fit:contain"/>
+          <div id="t2-loading" style="display:none" class="loading"><div class="spin"></div><span>Lendo com IA...</span></div>
+          <div id="t2-stats" style="display:none;margin-top:8px"></div>
         </div>
-        <div id="t2-chosen" style="display:none"></div>
-        <div id="t2-stats" style="display:none"></div>
         <div class="sec">Perfil tático</div>
         <div class="chips" id="t2a">
           <span onclick="flip(this)">Jogo com pivô</span>
@@ -353,9 +359,15 @@ body{background:#0f1117;color:#f0f2f8;font-family:-apple-system,BlinkMacSystemFo
     </div>
 
     <!-- CONFRONTO DIRETO -->
-    <div id="confronto-card" style="display:none" class="confronto-card">
-      <div class="confronto-title">Classificação e confronto direto</div>
-      <div id="confronto-content"></div>
+    <div class="confronto-card" style="margin-top:1rem">
+      <div class="confronto-title">Confronto direto</div>
+      <div onclick="document.getElementById('img-h2h').click()" style="border:1.5px dashed rgba(251,191,36,0.3);border-radius:10px;padding:.75rem;text-align:center;cursor:pointer;font-size:12px;color:#8b92a8;margin-bottom:8px">
+        📷 Clique para enviar print do confronto direto (SofaScore H2H)
+      </div>
+      <input type="file" id="img-h2h" accept="image/*" onchange="uploadH2H(this)" style="display:none"/>
+      <img id="img-h2h-preview" style="display:none;width:100%;border-radius:8px;margin-bottom:8px;max-height:150px;object-fit:contain"/>
+      <div id="h2h-loading" style="display:none" class="loading"><div class="spin"></div><span>Lendo confronto com IA...</span></div>
+      <div id="confronto-content" style="margin-top:4px"></div>
     </div>
     <button class="btn blue" style="margin-top:1rem" onclick="ir(3)">Próximo →</button>
   </div>
@@ -521,49 +533,97 @@ async function extrair(){
   document.querySelector('[onclick="extrair()"]').disabled=false;
 }
 
-// CLASSIFICAÇÃO VIA TEXTO + IA
-function uploadClassificacao(input){
+// UPLOAD EQUIPE — lê print do SofaScore com IA
+function uploadEquipe(input, team){
   const file = input.files[0];
   if(!file) return;
-  const preview = document.getElementById('img-class-preview');
-  const loading = document.getElementById('class-loading');
-  const result = document.getElementById('class-result');
-
+  const preview = document.getElementById('img-'+team+'-preview');
+  const loading = document.getElementById(team+'-loading');
+  const stats = document.getElementById(team+'-stats');
   const reader = new FileReader();
   reader.onload = (e) => {
     preview.src = e.target.result;
     preview.style.display = 'block';
     loading.style.display = 'flex';
-    result.style.display = 'none';
-
+    stats.style.display = 'none';
     const img = new Image();
     img.onload = async () => {
-      // Redimensiona para max 1200px mantendo qualidade
       const canvas = document.createElement('canvas');
       const maxW = 1200;
-      const scale = img.width > maxW ? maxW / img.width : 1;
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/png');
-      const b64 = dataUrl.split(',')[1];
-
+      const scale = img.width > maxW ? maxW/img.width : 1;
+      canvas.width = Math.round(img.width*scale);
+      canvas.height = Math.round(img.height*scale);
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      const b64 = canvas.toDataURL('image/png').split(',')[1];
       try{
         const r = await fetch('/.netlify/functions/extract-image',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({image:b64, mediaType:'image/png'})
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            image:b64, mediaType:'image/png',
+            prompt:`Esta imagem mostra dados de uma equipe de futsal (pode ser do SofaScore, FPFS ou outro site esportivo). Extraia todos os dados visíveis e retorne APENAS JSON puro sem markdown:
+{"nome":"nome da equipe","competicao":"nome","forma":"VVDED","classificacao":{"posicao":0,"pontos":0,"jogos":0,"vitorias":0,"empates":0,"derrotas":0,"golsPro":0,"golsContra":0},"ultimosJogos":[{"data":"dd/mm","adversario":"nome","placar":"2 x 1","resultado":"V","mandante":true}],"contexto":"resumo do momento da equipe"}`
+          })
         });
         const d = await r.json();
         if(d.error) throw new Error(d.error);
-        if(!d.tabela?.length) throw new Error('Tabela não encontrada. Tente um print maior ou mais nítido.');
-        D.matchCtx = {...(D.matchCtx||{}), classificacaoGeral: d};
-        renderClassificacao(d);
+        D[team+'s'] = d;
+        if(d.nome) D[team] = {name: d.nome};
+        renderStats(team, d);
+        // Atualiza label
+        if(d.nome){
+          const label = document.getElementById(team+'-label');
+          if(label) label.textContent = (team==='t1'?'🟢 ':'🔵 ') + d.nome;
+        }
       }catch(err){
-        result.innerHTML = `<div class="error">Erro: ${err.message}</div>`;
-        result.style.display = 'block';
+        stats.innerHTML=`<div style="font-size:12px;color:#f87171">Erro: ${err.message}</div>`;
+        stats.style.display='block';
       }
-      loading.style.display = 'none';
+      loading.style.display='none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// UPLOAD CONFRONTO DIRETO
+function uploadH2H(input){
+  const file = input.files[0];
+  if(!file) return;
+  const preview = document.getElementById('img-h2h-preview');
+  const loading = document.getElementById('h2h-loading');
+  const content = document.getElementById('confronto-content');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    loading.style.display = 'flex';
+    content.innerHTML = '';
+    const img = new Image();
+    img.onload = async () => {
+      const canvas = document.createElement('canvas');
+      const maxW = 1200;
+      const scale = img.width > maxW ? maxW/img.width : 1;
+      canvas.width = Math.round(img.width*scale);
+      canvas.height = Math.round(img.height*scale);
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      const b64 = canvas.toDataURL('image/png').split(',')[1];
+      try{
+        const r = await fetch('/.netlify/functions/extract-image',{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            image:b64, mediaType:'image/png',
+            prompt:`Esta imagem mostra o histórico de confrontos diretos (H2H) entre duas equipes de futsal. Extraia todos os dados e retorne APENAS JSON puro sem markdown:
+{"mandante":"nome equipe A","visitante":"nome equipe B","vitoriasMandante":0,"vitoriasVisitante":0,"empates":0,"totalJogos":0,"ultimosJogos":[{"data":"dd/mm/aaaa","mandante":"nome","placar":"2 x 1","visitante":"nome"}],"resumo":"texto resumindo o histórico"}`
+          })
+        });
+        const d = await r.json();
+        if(d.error) throw new Error(d.error);
+        D.matchCtx = {...(D.matchCtx||{}), confrontoDireto: d};
+        renderH2H(d);
+      }catch(err){
+        content.innerHTML=`<div style="font-size:12px;color:#f87171">Erro: ${err.message}</div>`;
+      }
+      loading.style.display='none';
     };
     img.src = e.target.result;
   };
@@ -571,134 +631,62 @@ function uploadClassificacao(input){
 }
 
 
-// BUSCA PERFORMANCE INDIVIDUAL
-async function buscarTime(team){
-  const nome = document.getElementById(team+'-q').value.trim();
-  if(!nome){ alert('Digite o nome da equipe.'); return; }
-  const btn = document.getElementById(team+'-btn');
-  btn.disabled=true; btn.textContent='Buscando...';
-  document.getElementById(team+'-chosen').style.display='block';
-  document.getElementById(team+'-chosen').innerHTML=`<div class="team-chosen">${nome}<button onclick="limparTime('${team}')">Trocar</button></div>`;
-  D[team]={name:nome};
-  const el = document.getElementById(team+'-stats');
-  el.style.display='block';
-  el.innerHTML='<div class="loading"><div class="spin"></div><span>Buscando performance com IA...</span></div>';
-  try{
-    const r = await fetch('/.netlify/functions/team-data?teamName='+encodeURIComponent(nome));
-    const d = await r.json();
-    D[team+'s']=d;
-    renderStats(team,d);
-    // Se ambas equipes preenchidas, busca confronto
-    if(D.t1&&D.t2) buscarConfronto();
-  }catch(e){
-    el.innerHTML='<div style="font-size:12px;color:#5a6078;padding:4px 0">Sem dados disponíveis.</div>';
-  }
-  btn.disabled=false; btn.textContent='Buscar com IA';
-}
-
-function limparTime(team){
-  D[team]=null; D[team+'s']=null;
-  document.getElementById(team+'-chosen').style.display='none';
-  document.getElementById(team+'-stats').style.display='none';
-  document.getElementById(team+'-q').value='';
-}
-
-function renderClassificacao(d){
-  const el = document.getElementById('class-result');
-  if(!d.tabela?.length){
-    el.innerHTML='<div style="font-size:12px;color:#f87171">Tabela não encontrada. Tente um print mais nítido.</div>';
-    el.style.display='block';
-    return;
-  }
-  const m = (D.ex.mandante||'').toLowerCase().substring(0,5);
-  const v = (D.ex.visitante||'').toLowerCase().substring(0,5);
-  let h = `<div style="font-size:11px;font-weight:700;color:#34d399;text-transform:uppercase;margin-bottom:8px">${d.competicao||'Classificação extraída'}</div>
-  <table style="width:100%;font-size:12px;border-collapse:collapse">
-    <tr style="color:#5a6078;font-size:10px">
-      <td style="padding:3px 4px">#</td>
-      <td style="padding:3px 4px">Equipe</td>
-      <td style="padding:3px 4px;text-align:center">Pts</td>
-      <td style="padding:3px 4px;text-align:center">J</td>
-      <td style="padding:3px 4px;text-align:center">V</td>
-      <td style="padding:3px 4px;text-align:center">E</td>
-      <td style="padding:3px 4px;text-align:center">D</td>
-      <td style="padding:3px 4px;text-align:center">GP</td>
-      <td style="padding:3px 4px;text-align:center">GC</td>
-    </tr>`;
-  d.tabela.forEach(row=>{
-    const nome = (row.equipe||'').toLowerCase();
-    const dest = nome.includes(m) || nome.includes(v);
-    const cor = dest ? 'color:#fbbf24;font-weight:700' : 'color:#f0f2f8';
-    h += `<tr style="${cor};border-bottom:1px solid rgba(255,255,255,0.05)">
-      <td style="padding:4px">${row.posicao}º</td>
-      <td style="padding:4px">${row.equipe}</td>
-      <td style="padding:4px;text-align:center">${row.pontos}</td>
-      <td style="padding:4px;text-align:center">${row.jogos}</td>
-      <td style="padding:4px;text-align:center">${row.vitorias}</td>
-      <td style="padding:4px;text-align:center">${row.empates}</td>
-      <td style="padding:4px;text-align:center">${row.derrotas}</td>
-      <td style="padding:4px;text-align:center">${row.golsPro||0}</td>
-      <td style="padding:4px;text-align:center">${row.golsContra||0}</td>
-    </tr>`;
-  });
-  h += '</table>';
-  el.innerHTML = h;
-  el.style.display = 'block';
-}
-
 function renderStats(team,d){
   const el=document.getElementById(team+'-stats');
-  const s=d.classificacao; const g=d.ultimosJogos||[]; const f=d.forma||'';
+  el.style.display='block';
+  const s=d.classificacao||d.standings;
+  const g=d.ultimosJogos||d.recentGames||[];
+  const f=d.forma||d.summary?.form||'';
   let h='<div class="stats-box">';
   if(d.contexto) h+=`<div style="font-size:12px;color:#8b92a8;line-height:1.5;margin-bottom:8px">${d.contexto}</div>`;
-  if(s&&s.posicao) h+=`<div class="stat-row">
-    <div class="stat"><div class="n">${s.posicao}º</div><div class="l">Pos.</div></div>
-    <div class="stat"><div class="n">${s.pontos||0}</div><div class="l">Pts</div></div>
-    <div class="stat"><div class="n">${s.golsPro||0}</div><div class="l">Gols</div></div>
-    <div class="stat"><div class="n">${s.golsContra||0}</div><div class="l">Sofreu</div></div>
+  if(s&&(s.posicao||s.position)) h+=`<div class="stat-row">
+    <div class="stat"><div class="n">${s.posicao||s.position||'?'}º</div><div class="l">Pos.</div></div>
+    <div class="stat"><div class="n">${s.pontos||s.points||0}</div><div class="l">Pts</div></div>
+    <div class="stat"><div class="n">${s.golsPro||s.goalsFor||0}</div><div class="l">Gols</div></div>
+    <div class="stat"><div class="n">${s.golsContra||s.goalsAgainst||0}</div><div class="l">Sofreu</div></div>
   </div>`;
   if(f) h+=`<div class="form">${f.split('').map(r=>`<div class="fb ${r}">${r}</div>`).join('')}</div>`;
-  if(g.length){h+='<div class="games">';g.forEach(x=>{h+=`<div class="game"><div class="gr ${x.resultado}">${x.resultado}</div><div class="opp">${x.adversario}</div><div class="sc">${x.placar}</div><div style="font-size:10px;color:#5a6078">${x.mandante?'Casa':'Fora'}</div></div>`;});h+='</div>';}
-  h+='</div>';
-  el.innerHTML=h||'<div style="font-size:12px;color:#5a6078">Sem dados.</div>';
-}
-
-// CONFRONTO DIRETO
-async function buscarConfronto(){
-  const card=document.getElementById('confronto-card');
-  card.style.display='block';
-  document.getElementById('confronto-content').innerHTML='<div class="loading"><div class="spin"></div><span>Buscando confronto direto...</span></div>';
-  try{
-    const r=await fetch('/.netlify/functions/match-context',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({mandante:D.t1.name,visitante:D.t2.name,competicao:D.ex?.comp||''})
+  if(g.length){
+    h+='<div class="games">';
+    g.forEach(x=>{
+      const res=x.resultado||x.result||'?';
+      const adv=x.adversario||x.opponent||'';
+      const sc=x.placar||x.score||'';
+      const casa=x.mandante!=null?x.mandante:(x.home!=null?x.home:true);
+      h+=`<div class="game"><div class="gr ${res}">${res}</div><div class="opp">${adv}</div><div class="sc">${sc}</div><div style="font-size:10px;color:#5a6078">${casa?'Casa':'Fora'}</div></div>`;
     });
-    const d=await r.json();
-    D.matchCtx={...D.matchCtx,...d};
-    renderConfronto(d);
-  }catch(e){
-    document.getElementById('confronto-content').innerHTML='<div style="font-size:12px;color:#5a6078">Sem dados de confronto.</div>';
+    h+='</div>';
   }
+  if(!d.contexto&&!s&&!g.length) h+='<div style="font-size:12px;color:#5a6078">Sem dados encontrados na imagem.</div>';
+  h+='</div>';
+  el.innerHTML=h;
 }
 
-function renderConfronto(d){
-  let h='';
-  if(d.confrontoDireto){
-    const c=d.confrontoDireto;
-    h+=`<div class="h2h-grid">
-      <div class="h2h-box" style="background:rgba(52,211,153,0.1)"><div class="hn" style="color:#34d399">${c.vitoriasMandante||0}</div><div class="hl">${(D.t1?.name||'').split(' ')[0]}</div></div>
-      <div class="h2h-box" style="background:rgba(251,191,36,0.1)"><div class="hn" style="color:#fbbf24">${c.empates||0}</div><div class="hl">Empates</div></div>
-      <div class="h2h-box" style="background:rgba(79,142,247,0.1)"><div class="hn" style="color:#4f8ef7">${c.vitoriasVisitante||0}</div><div class="hl">${(D.t2?.name||'').split(' ')[0]}</div></div>
-    </div>`;
-    if(c.ultimosJogos?.length){
-      c.ultimosJogos.slice(0,3).forEach(j=>{
-        h+=`<div style="font-size:12px;color:#8b92a8;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)">${j.data} · ${j.mandante} ${j.placar} ${j.visitante}</div>`;
-      });
-    }
-    if(c.resumo) h+=`<div style="font-size:12px;color:#8b92a8;margin-top:8px;font-style:italic">${c.resumo}</div>`;
+function renderH2H(d){
+  const content = document.getElementById('confronto-content');
+  const m = d.mandante || D.t1?.name || 'Mandante';
+  const v = d.visitante || D.t2?.name || 'Visitante';
+  let h = `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+    <div style="text-align:center;background:rgba(52,211,153,0.1);border-radius:8px;padding:10px">
+      <div style="font-size:22px;font-weight:700;color:#34d399">${d.vitoriasMandante||0}</div>
+      <div style="font-size:10px;color:#5a6078;margin-top:2px">${m.split(' ')[0]}</div>
+    </div>
+    <div style="text-align:center;background:rgba(251,191,36,0.1);border-radius:8px;padding:10px">
+      <div style="font-size:22px;font-weight:700;color:#fbbf24">${d.empates||0}</div>
+      <div style="font-size:10px;color:#5a6078;margin-top:2px">Empates</div>
+    </div>
+    <div style="text-align:center;background:rgba(79,142,247,0.1);border-radius:8px;padding:10px">
+      <div style="font-size:22px;font-weight:700;color:#4f8ef7">${d.vitoriasVisitante||0}</div>
+      <div style="font-size:10px;color:#5a6078;margin-top:2px">${v.split(' ')[0]}</div>
+    </div>
+  </div>`;
+  if(d.ultimosJogos?.length){
+    d.ultimosJogos.slice(0,5).forEach(j=>{
+      h+=`<div style="font-size:12px;color:#8b92a8;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05)">${j.data||''} · ${j.mandante} ${j.placar} ${j.visitante}</div>`;
+    });
   }
-  if(d.contextoConfrontoAtual) h+=`<div style="font-size:12px;color:#8b92a8;margin-top:10px;line-height:1.5;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px">${d.contextoConfrontoAtual}</div>`;
-  document.getElementById('confronto-content').innerHTML=h||'<div style="font-size:12px;color:#5a6078">Sem dados.</div>';
+  if(d.resumo) h+=`<div style="font-size:12px;color:#8b92a8;margin-top:8px;font-style:italic;line-height:1.5">${d.resumo}</div>`;
+  content.innerHTML = h || '<div style="font-size:12px;color:#5a6078">Sem dados de confronto.</div>';
 }
 
 // SUMMARY
