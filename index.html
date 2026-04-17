@@ -237,15 +237,14 @@ body{background:#0f1117;color:#f0f2f8;font-family:-apple-system,BlinkMacSystemFo
     <!-- CLASSIFICAÇÃO — upload de imagem único -->
     <div class="card" style="margin-bottom:1rem">
       <div class="card-title">Classificação da competição</div>
-      <div class="info" style="margin-bottom:.75rem">Tire um print da tabela no site da FPFS e envie abaixo. A IA extrai os dados automaticamente.</div>
-      <div class="upload-area" onclick="document.getElementById('img-class').click()">
-        <input type="file" id="img-class" accept="image/*" onchange="uploadClassificacao(this)"/>
-        <div style="font-size:24px">📷</div>
-        <p>Clique para enviar o print da tabela</p>
-        <p>ou arraste a imagem aqui</p>
+      <div class="info" style="margin-bottom:.75rem">Tire um print da tabela no site da FPFS e envie abaixo. A IA lê a imagem e extrai os dados automaticamente.</div>
+      <div id="upload-zone" onclick="document.getElementById('img-class').click()" style="border:1.5px dashed rgba(255,255,255,0.15);border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;transition:border-color .15s">
+        <input type="file" id="img-class" accept="image/*" onchange="uploadClassificacao(this)" style="display:none"/>
+        <div style="font-size:28px;margin-bottom:6px">📷</div>
+        <p style="font-size:13px;color:#8b92a8">Clique para enviar o print da tabela</p>
       </div>
-      <img id="img-class-preview" class="upload-preview" style="display:none"/>
-      <div id="class-loading" style="display:none" class="loading"><div class="spin"></div><span>Extraindo classificação da imagem...</span></div>
+      <img id="img-class-preview" style="display:none;width:100%;border-radius:8px;margin-top:8px;max-height:180px;object-fit:contain"/>
+      <div id="class-loading" style="display:none" class="loading"><div class="spin"></div><span>Lendo imagem com IA...</span></div>
       <div id="class-result" style="display:none;margin-top:10px"></div>
     </div>
 
@@ -522,67 +521,55 @@ async function extrair(){
   document.querySelector('[onclick="extrair()"]').disabled=false;
 }
 
-// UPLOAD CLASSIFICAÇÃO
+// CLASSIFICAÇÃO VIA TEXTO + IA
 function uploadClassificacao(input){
   const file = input.files[0];
   if(!file) return;
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    document.getElementById('img-class-preview').src = e.target.result;
-    document.getElementById('img-class-preview').style.display='block';
-    document.getElementById('class-loading').style.display='flex';
-    document.getElementById('class-result').style.display='none';
+  const preview = document.getElementById('img-class-preview');
+  const loading = document.getElementById('class-loading');
+  const result = document.getElementById('class-result');
 
-    // Redimensiona para melhor leitura pela IA
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    loading.style.display = 'flex';
+    result.style.display = 'none';
+
     const img = new Image();
     img.onload = async () => {
+      // Redimensiona para max 1200px mantendo qualidade
       const canvas = document.createElement('canvas');
-      const maxW = 1600;
+      const maxW = 1200;
       const scale = img.width > maxW ? maxW / img.width : 1;
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/png');
       const b64 = dataUrl.split(',')[1];
-      D.classImg = b64;
 
       try{
         const r = await fetch('/.netlify/functions/extract-image',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({image:b64, mediaType:'image/png', type:'classificacao'})
+          body:JSON.stringify({image:b64, mediaType:'image/png'})
         });
-      const d = await r.json();
-      if(d.error) throw new Error(d.error);
-      D.matchCtx = { classificacaoGeral: d };
-      renderClassificacao(d);
-    }catch(err){
-      document.getElementById('class-result').innerHTML=`<div class="error">Erro: ${err.message}</div>`;
-      document.getElementById('class-result').style.display='block';
-    }
-    document.getElementById('class-loading').style.display='none';
+        const d = await r.json();
+        if(d.error) throw new Error(d.error);
+        if(!d.tabela?.length) throw new Error('Tabela não encontrada. Tente um print maior ou mais nítido.');
+        D.matchCtx = {...(D.matchCtx||{}), classificacaoGeral: d};
+        renderClassificacao(d);
+      }catch(err){
+        result.innerHTML = `<div class="error">Erro: ${err.message}</div>`;
+        result.style.display = 'block';
+      }
+      loading.style.display = 'none';
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-function renderClassificacao(d){
-  const el = document.getElementById('class-result');
-  if(!d.tabela?.length){ el.innerHTML='<div style="font-size:12px;color:#5a6078">Sem tabela encontrada na imagem.</div>'; el.style.display='block'; return; }
-  let h = `<div style="font-size:11px;font-weight:700;color:#34d399;text-transform:uppercase;margin-bottom:8px">${d.competicao||'Classificação extraída'}</div>
-  <table class="tabela"><tr><th>#</th><th>Equipe</th><th>Pts</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th></tr>`;
-  const m = (D.ex.mandante||'').toLowerCase().substring(0,5);
-  const v = (D.ex.visitante||'').toLowerCase().substring(0,5);
-  d.tabela.forEach(row=>{
-    const dest = row.equipe?.toLowerCase().includes(m) || row.equipe?.toLowerCase().includes(v);
-    h += `<tr${dest?' class="destaque"':''}><td>${row.posicao}º</td><td>${row.equipe}</td><td>${row.pontos}</td><td>${row.jogos}</td><td>${row.vitorias}</td><td>${row.empates}</td><td>${row.derrotas}</td><td>${row.golsPro||0}</td><td>${row.golsContra||0}</td></tr>`;
-  });
-  h += '</table>';
-  el.innerHTML = h;
-  el.style.display='block';
-}
 
 // BUSCA PERFORMANCE INDIVIDUAL
 async function buscarTime(team){
