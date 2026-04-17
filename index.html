@@ -529,6 +529,7 @@ function uploadClassificacao(input){
   const reader = new FileReader();
   reader.onload = async (e) => {
     const b64 = e.target.result.split(',')[1];
+    const mediaType = file.type || 'image/jpeg';
     D.classImg = b64;
     document.getElementById('img-class-preview').src = e.target.result;
     document.getElementById('img-class-preview').style.display='block';
@@ -538,7 +539,7 @@ function uploadClassificacao(input){
       const r = await fetch('/.netlify/functions/extract-image',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({image:b64, type:'classificacao'})
+        body:JSON.stringify({image:b64, mediaType:mediaType, type:'classificacao'})
       });
       const d = await r.json();
       if(d.error) throw new Error(d.error);
