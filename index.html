@@ -528,26 +528,31 @@ function uploadClassificacao(input){
   if(!file) return;
   const reader = new FileReader();
   reader.onload = async (e) => {
-    const b64 = e.target.result.split(',')[1];
-    // Detecta o tipo real pelo header da imagem
-    const mediaType = (() => {
-      const header = e.target.result.substring(0,30);
-      if(header.includes('data:image/png')) return 'image/png';
-      if(header.includes('data:image/webp')) return 'image/webp';
-      if(header.includes('data:image/gif')) return 'image/gif';
-      return 'image/jpeg';
-    })();
-    D.classImg = b64;
     document.getElementById('img-class-preview').src = e.target.result;
     document.getElementById('img-class-preview').style.display='block';
     document.getElementById('class-loading').style.display='flex';
     document.getElementById('class-result').style.display='none';
-    try{
-      const r = await fetch('/.netlify/functions/extract-image',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({image:b64, mediaType:mediaType, type:'classificacao'})
-      });
+
+    // Redimensiona para melhor leitura pela IA
+    const img = new Image();
+    img.onload = async () => {
+      const canvas = document.createElement('canvas');
+      const maxW = 1600;
+      const scale = img.width > maxW ? maxW / img.width : 1;
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/png');
+      const b64 = dataUrl.split(',')[1];
+      D.classImg = b64;
+
+      try{
+        const r = await fetch('/.netlify/functions/extract-image',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({image:b64, mediaType:'image/png', type:'classificacao'})
+        });
       const d = await r.json();
       if(d.error) throw new Error(d.error);
       D.matchCtx = { classificacaoGeral: d };
@@ -557,6 +562,8 @@ function uploadClassificacao(input){
       document.getElementById('class-result').style.display='block';
     }
     document.getElementById('class-loading').style.display='none';
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
