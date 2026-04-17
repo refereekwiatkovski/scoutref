@@ -255,13 +255,12 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
       <div class="team-panel home">
         <div class="team-label" id="t1-label">🟢 Mandante</div>
         <div class="field">
-          <label>Buscar no SofaScore</label>
-          <div class="search-wrap">
-            <input id="t1-q" placeholder="Nome da equipe..." oninput="buscar(this,'t1')" autocomplete="off" style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:14px;padding:9px 12px;font-family:inherit"/>
-            <div id="t1-res" class="search-results" style="display:none"></div>
-          </div>
-          <div id="t1-chosen" style="display:none"></div>
-          <div id="t1-stats" class="stats" style="display:none"></div>
+          <label>Classificação (cole texto ou dados da tabela)</label>
+          <textarea id="t1-class" placeholder="Ex: 3º lugar — 12pts (6J: 4V 0E 2D) | Gols: 18 marcados, 10 sofridos&#10;Ou cole qualquer texto com os dados..." style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:9px 12px;font-family:inherit;resize:vertical;min-height:60px;line-height:1.5"></textarea>
+        </div>
+        <div class="field">
+          <label>Últimos jogos (resultados recentes)</label>
+          <textarea id="t1-jogos" placeholder="Ex:&#10;V 3x1 vs Palotina (Casa)&#10;D 1x2 vs ACAF (Fora)&#10;V 2x0 vs Cândido (Casa)" style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:9px 12px;font-family:inherit;resize:vertical;min-height:70px;line-height:1.5"></textarea>
         </div>
         <div class="section">Perfil tático</div>
         <div class="chips" id="t1a">
@@ -307,13 +306,12 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
       <div class="team-panel away">
         <div class="team-label" id="t2-label">🔵 Visitante</div>
         <div class="field">
-          <label>Buscar no SofaScore</label>
-          <div class="search-wrap">
-            <input id="t2-q" placeholder="Nome da equipe..." oninput="buscar(this,'t2')" autocomplete="off" style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:14px;padding:9px 12px;font-family:inherit"/>
-            <div id="t2-res" class="search-results" style="display:none"></div>
-          </div>
-          <div id="t2-chosen" style="display:none"></div>
-          <div id="t2-stats" class="stats" style="display:none"></div>
+          <label>Classificação (cole texto ou dados da tabela)</label>
+          <textarea id="t2-class" placeholder="Ex: 1º lugar — 18pts (6J: 6V 0E 0D) | Gols: 24 marcados, 6 sofridos&#10;Ou cole qualquer texto com os dados..." style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:9px 12px;font-family:inherit;resize:vertical;min-height:60px;line-height:1.5"></textarea>
+        </div>
+        <div class="field">
+          <label>Últimos jogos (resultados recentes)</label>
+          <textarea id="t2-jogos" placeholder="Ex:&#10;V 2x0 vs AAEMA (Fora)&#10;V 3x1 vs FAC (Casa)&#10;E 1x1 vs Palotina (Fora)" style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:9px 12px;font-family:inherit;resize:vertical;min-height:70px;line-height:1.5"></textarea>
         </div>
         <div class="section">Perfil tático</div>
         <div class="chips" id="t2a">
@@ -356,6 +354,13 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
         <div class="field" style="margin-top:10px"><label>Atleta / técnico a monitorar</label><input id="t2p" placeholder="Ex: Técnico Dalton — pode tumultar"/></div>
       </div>
     </div>
+    <div class="card" style="margin-top:1rem">
+      <div class="card-title">Confronto direto (histórico entre as equipes)</div>
+      <textarea id="confronto" placeholder="Cole aqui o histórico de confrontos diretos entre as equipes...&#10;Ex:&#10;AAEMA 2x1 São Joseense (Série Prata 2025)&#10;São Joseense 3x0 AAEMA (Copa União 2025)&#10;AAEMA 1x1 São Joseense (Série Prata 2024)" style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:9px 12px;font-family:inherit;resize:vertical;min-height:80px;line-height:1.5"></textarea>
+    </div>
+    <!-- CLASSIFICAÇÃO E CONFRONTO DIRETO -->
+    <div id="confronto-area" style="display:none;background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.5rem;margin-top:1rem"></div>
+
     <button class="btn blue" onclick="ir(3)">Próximo →</button>
   </div>
 
@@ -529,10 +534,9 @@ async function buscar(input, team) {
   const res = document.getElementById(team + '-res');
   clearTimeout(timers[team]);
   if (q.length < 2) { res.style.display = 'none'; return; }
-  // Mostra botão de buscar ao digitar
-  res.innerHTML = `<div class="sri" onclick="escolher('${team}','${q.replace(/'/g,"\'")}')">
-    <div>Buscar dados de "<strong>${q}</strong>" com IA</div>
-    <div class="sub">Clique para pesquisar classificação e resultados</div>
+  res.innerHTML = `<div class="sri" onclick="escolher('${team}','${q.replace(/'/g,"\'").replace(/"/g,'\"')}')">
+    <div>Buscar "<strong>${q}</strong>" com IA</div>
+    <div class="sub">Pesquisa classificação, forma e resultados recentes</div>
   </div>`;
   res.style.display = 'block';
 }
@@ -544,15 +548,121 @@ async function escolher(team, nome) {
   document.getElementById(team + '-chosen').innerHTML =
     `<div class="team-chosen">${nome}<button onclick="limparTime('${team}')">Trocar</button></div>`;
   D[team] = { name: nome };
+
+  // Busca performance individual
   const el = document.getElementById(team + '-stats');
   el.style.display = 'block';
-  el.innerHTML = '<div class="loading"><div class="spin"></div><span>Buscando dados com IA...</span></div>';
+  el.innerHTML = '<div class="loading"><div class="spin"></div><span>Buscando performance com IA...</span></div>';
   try {
     const r = await fetch('/.netlify/functions/team-data?teamName=' + encodeURIComponent(nome));
     const d = await r.json();
     D[team + 's'] = d;
     renderStats(team, d);
-  } catch (e) { el.innerHTML = '<div style="font-size:12px;color:#5a6078;padding:4px 0">Sem dados disponíveis.</div>'; }
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:12px;color:#5a6078;padding:4px 0">Sem dados disponíveis.</div>';
+  }
+
+  // Se ambas equipes estão preenchidas, busca contexto do confronto
+  const outroTime = team === 't1' ? 't2' : 't1';
+  if (D[outroTime]) {
+    buscarConfrontoEClassificacao();
+  }
+}
+
+async function buscarConfrontoEClassificacao() {
+  const m = D.t1?.name;
+  const v = D.t2?.name;
+  if (!m || !v) return;
+
+  const el = document.getElementById('confronto-area');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading"><div class="spin"></div><span>Buscando classificação e confronto direto...</span></div>';
+
+  try {
+    const r = await fetch('/.netlify/functions/match-context', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mandante: m, visitante: v, competicao: D.ex?.comp || '' })
+    });
+    const d = await r.json();
+    D.matchContext = d;
+    renderConfrontoEClassificacao(d, m, v);
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:12px;color:#f87171">Erro ao buscar confronto.</div>';
+  }
+}
+
+function renderConfrontoEClassificacao(d, mandante, visitante) {
+  const el = document.getElementById('confronto-area');
+  if (!el) return;
+  let h = '';
+
+  // Classificação geral
+  if (d.classificacaoGeral?.tabela?.length) {
+    h += `<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${d.classificacaoGeral.competicao || 'Classificação'}</div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <tr style="color:#5a6078;font-size:10px">
+          <td style="padding:3px 4px">#</td><td style="padding:3px 4px">Equipe</td>
+          <td style="padding:3px 4px;text-align:center">Pts</td>
+          <td style="padding:3px 4px;text-align:center">J</td>
+          <td style="padding:3px 4px;text-align:center">V</td>
+          <td style="padding:3px 4px;text-align:center">E</td>
+          <td style="padding:3px 4px;text-align:center">D</td>
+          <td style="padding:3px 4px;text-align:center">SG</td>
+        </tr>`;
+    d.classificacaoGeral.tabela.forEach(row => {
+      const destaque = row.equipe?.toLowerCase().includes(mandante.toLowerCase().substring(0,4)) ||
+                       row.equipe?.toLowerCase().includes(visitante.toLowerCase().substring(0,4));
+      const cor = destaque ? 'color:#fbbf24;font-weight:600' : 'color:#f0f2f8';
+      h += `<tr style="${cor}">
+        <td style="padding:3px 4px">${row.posicao}º</td>
+        <td style="padding:3px 4px">${row.equipe}</td>
+        <td style="padding:3px 4px;text-align:center">${row.pontos}</td>
+        <td style="padding:3px 4px;text-align:center">${row.jogos}</td>
+        <td style="padding:3px 4px;text-align:center">${row.vitorias}</td>
+        <td style="padding:3px 4px;text-align:center">${row.empates}</td>
+        <td style="padding:3px 4px;text-align:center">${row.derrotas}</td>
+        <td style="padding:3px 4px;text-align:center">${(row.golsPro||0)-(row.golsContra||0)}</td>
+      </tr>`;
+    });
+    h += '</table></div>';
+  }
+
+  // Confronto direto
+  if (d.confrontoDireto) {
+    const c = d.confrontoDireto;
+    h += `<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#4f8ef7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Confronto direto</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+        <div style="text-align:center;background:rgba(52,211,153,0.1);border-radius:8px;padding:8px">
+          <div style="font-size:18px;font-weight:700;color:#34d399">${c.vitoriasMandante||0}</div>
+          <div style="font-size:10px;color:#5a6078">${mandante.split(' ')[0]}</div>
+        </div>
+        <div style="text-align:center;background:rgba(251,191,36,0.1);border-radius:8px;padding:8px">
+          <div style="font-size:18px;font-weight:700;color:#fbbf24">${c.empates||0}</div>
+          <div style="font-size:10px;color:#5a6078">Empates</div>
+        </div>
+        <div style="text-align:center;background:rgba(79,142,247,0.1);border-radius:8px;padding:8px">
+          <div style="font-size:18px;font-weight:700;color:#4f8ef7">${c.vitoriasVisitante||0}</div>
+          <div style="font-size:10px;color:#5a6078">${visitante.split(' ')[0]}</div>
+        </div>
+      </div>`;
+    if (c.ultimosJogos?.length) {
+      c.ultimosJogos.slice(0,3).forEach(j => {
+        h += `<div style="font-size:12px;color:#8b92a8;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06)">${j.data} · ${j.mandante} ${j.placar} ${j.visitante}</div>`;
+      });
+    }
+    if (c.resumo) h += `<div style="font-size:12px;color:#8b92a8;margin-top:8px;font-style:italic">${c.resumo}</div>`;
+    h += '</div>';
+  }
+
+  if (d.contextoConfrontoAtual) {
+    h += `<div style="font-size:12px;color:#8b92a8;line-height:1.5;padding:8px;background:rgba(255,255,255,0.04);border-radius:8px">${d.contextoConfrontoAtual}</div>`;
+  }
+
+  el.innerHTML = h || '<div style="font-size:12px;color:#5a6078">Sem dados de confronto encontrados.</div>';
 }
 
 function limparTime(team) {
@@ -614,10 +724,15 @@ async function gerar() {
       logistica: on('c4'),
       t1tatico: on('t1a'), t1comportamento: on('t1b'), t1atencao: on('t1c'),
       t1player: document.getElementById('t1p').value,
+      t1class: document.getElementById('t1-class').value,
+      t1jogos: document.getElementById('t1-jogos').value,
       t2tatico: on('t2a'), t2comportamento: on('t2b'), t2atencao: on('t2c'),
-      t2player: document.getElementById('t2p').value
+      t2player: document.getElementById('t2p').value,
+      t2class: document.getElementById('t2-class').value,
+      t2jogos: document.getElementById('t2-jogos').value,
+      confronto: document.getElementById('confronto').value
     },
-    team1Data: D.t1s, team2Data: D.t2s,
+    team1Data: D.t1s, team2Data: D.t2s, matchContext: D.matchContext||null,
     planData: {
       riscos: risks(), atencao: on('c5'),
       inicio: on('mc0'), durante: on('mc1'), final: on('mc2'),
