@@ -63,9 +63,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   background:transparent;
   transition:background 0.15s, color 0.15s, border-color 0.15s;
 }
-.chip:hover{border-color:var(--border2);color:var(--text);background:var(--bg3)}
-.chip.ativo{background:var(--amber-bg) !important;color:var(--amber) !important;border-color:rgba(251,191,36,0.4) !important}
-.chip.ativo:hover{background:var(--amber-bg) !important;color:var(--amber) !important;border-color:rgba(251,191,36,0.6) !important}
+.chip:hover:not(.ativo){border-color:var(--border2);color:var(--text);background:var(--bg3)}
+.chip.ativo,.chip.ativo:hover{background:rgba(251,191,36,0.15)!important;color:#fbbf24!important;border-color:rgba(251,191,36,0.5)!important}
 
 .team-split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .team-panel{border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem}
