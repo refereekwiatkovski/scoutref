@@ -1,5 +1,3 @@
-const { jsPDF } = require('jspdf');
-
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
