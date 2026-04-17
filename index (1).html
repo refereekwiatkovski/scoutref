@@ -394,19 +394,6 @@ async function extrairEscala() {
 });
 const parsed = await resp.json();
 if (parsed.error) throw new Error(parsed.error);
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-haiku-4-5-20251001',
-        max_tokens:800,
-        messages:[{role:'user',content:`Extraia os dados desta escala de arbitragem de futsal. Retorne APENAS JSON puro, sem markdown nem texto extra:
-
-${text}
-
-Formato exato:
-{"mandante":"","visitante":"","datahora":"","ginasio":"","cidade":"","comp":"","fase":"","arb1":"","arb2":"","anotador":"","crono":""}`}]
-      })
-    });
     const fields = ['mandante','visitante','datahora','ginasio','cidade','comp','fase','arb1','arb2','anotador','crono'];
     fields.forEach(f=>{ const el=document.getElementById(f); if(el&&parsed[f]) el.value=parsed[f]; });
     document.getElementById('t1-label').textContent = parsed.mandante||'Mandante';
