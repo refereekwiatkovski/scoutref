@@ -3,143 +3,135 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>ScoutRef</title>
+<title>ScoutRef — Análise Pré-Jogo</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-serif; padding: 2rem 1rem 4rem; }
-.wrap { max-width: 800px; margin: 0 auto; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f1117;color:#f0f2f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.6;min-height:100vh}
+.wrap{max-width:820px;margin:0 auto;padding:2rem 1rem 4rem}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:2rem}
+.logo{width:38px;height:38px;background:#4f8ef7;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;flex-shrink:0}
+.header h1{font-size:20px;font-weight:600}
+.header p{font-size:13px;color:#8b92a8}
+.steps{display:flex;margin-bottom:1.5rem}
+.step{flex:1;text-align:center;font-size:12px;color:#5a6078;padding-bottom:6px;border-bottom:2px solid rgba(255,255,255,0.08);cursor:pointer;user-select:none}
+.step.active{color:#4f8ef7;border-bottom-color:#4f8ef7}
+.step.done{color:#34d399;border-bottom-color:#34d399}
+.card{background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.5rem;margin-bottom:1rem}
+.card-title{font-size:11px;font-weight:700;color:#5a6078;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.25rem}
+.sec{font-size:11px;font-weight:700;color:#5a6078;text-transform:uppercase;letter-spacing:.06em;margin:1rem 0 .5rem}
+.sec:first-child{margin-top:0}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:13px;color:#8b92a8;margin-bottom:4px}
+.field input,.field textarea{width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:14px;padding:9px 12px;font-family:inherit;transition:border .15s}
+.field input:focus,.field textarea:focus{outline:none;border-color:#4f8ef7}
+.field textarea{resize:vertical;min-height:70px;line-height:1.5}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.paste{width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:12px;font-family:inherit;resize:vertical;min-height:140px;line-height:1.5}
+.paste:focus{outline:none;border-color:#4f8ef7}
 
-/* HEADER */
-.header { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; }
-.logo { width: 38px; height: 38px; background: #4f8ef7; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 14px; }
-.header h1 { font-size: 20px; font-weight: 600; }
-.header p { font-size: 13px; color: #8b92a8; }
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.chips span{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);color:#8b92a8;cursor:pointer;user-select:none;display:inline-block;transition:background .1s,color .1s,border-color .1s}
+.chips span.on{background:rgba(251,191,36,0.18);color:#fbbf24;border-color:rgba(251,191,36,0.5)}
 
-/* STEPS */
-.steps { display: flex; margin-bottom: 1.5rem; }
-.step { flex: 1; text-align: center; font-size: 12px; color: #5a6078; padding-bottom: 6px; border-bottom: 2px solid rgba(255,255,255,0.08); cursor: pointer; }
-.step.active { color: #4f8ef7; border-bottom-color: #4f8ef7; }
-.step.done { color: #34d399; border-bottom-color: #34d399; }
+/* TEAMS */
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.team-panel{border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.25rem}
+.team-panel.home{border-top:3px solid #34d399}
+.team-panel.away{border-top:3px solid #4f8ef7}
+.team-label{font-size:13px;font-weight:600;color:#8b92a8;margin-bottom:1rem}
 
-/* CARDS */
-.card { background: #1a1d27; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.5rem; margin-bottom: 1rem; }
-.card-title { font-size: 11px; font-weight: 700; color: #5a6078; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1.25rem; }
-.section { font-size: 11px; font-weight: 700; color: #5a6078; text-transform: uppercase; letter-spacing: .06em; margin: 1rem 0 .5rem; }
-.section:first-child { margin-top: 0; }
-
-/* FIELDS */
-.field { margin-bottom: 1rem; }
-.field label { display: block; font-size: 13px; color: #8b92a8; margin-bottom: 4px; }
-.field input, .field textarea {
-  width: 100%; background: #22263a; border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px; color: #f0f2f8; font-size: 14px; padding: 9px 12px; font-family: inherit;
-}
-.field input:focus, .field textarea:focus { outline: none; border-color: #4f8ef7; }
-.field textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
-.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-
-/* CHIPS — MÚLTIPLA SELEÇÃO GARANTIDA */
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
-.chips span {
-  font-size: 12px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.12);
-  color: #8b92a8;
-  cursor: pointer;
-  user-select: none;
-  display: inline-block;
-}
-.chips span.on {
-  background: rgba(251,191,36,0.18);
-  color: #fbbf24;
-  border-color: rgba(251,191,36,0.5);
-}
-
-/* TEAM PANELS */
-.teams { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.team-panel { border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.25rem; }
-.team-panel.home { border-top: 3px solid #34d399; }
-.team-panel.away { border-top: 3px solid #4f8ef7; }
-.team-label { font-size: 12px; font-weight: 600; color: #8b92a8; margin-bottom: 1rem; }
-
-/* SEARCH */
-.search-wrap { position: relative; }
-.search-results { position: absolute; top: 100%; left: 0; right: 0; background: #22263a; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; z-index: 100; max-height: 200px; overflow-y: auto; margin-top: 4px; }
-.sri { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13px; }
-.sri:hover { background: #0f1117; }
-.sri .sub { font-size: 11px; color: #8b92a8; margin-top: 2px; }
-.team-chosen { display: flex; align-items: center; gap: 8px; background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25); border-radius: 10px; padding: 8px 12px; margin-top: 6px; font-size: 13px; font-weight: 600; color: #34d399; }
-.team-chosen button { margin-left: auto; font-size: 11px; padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: #8b92a8; cursor: pointer; }
+/* BUSCA */
+.search-wrap{position:relative}
+.search-input{width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:14px;padding:9px 12px;font-family:inherit}
+.search-input:focus{outline:none;border-color:#4f8ef7}
+.search-btn{width:100%;margin-top:6px;padding:9px;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.3);border-radius:10px;color:#a78bfa;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.search-btn:hover{opacity:.85}
+.search-btn:disabled{opacity:.4;cursor:not-allowed}
+.team-chosen{display:flex;align-items:center;gap:8px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);border-radius:10px;padding:8px 12px;margin-bottom:8px;font-size:13px;font-weight:600;color:#34d399}
+.team-chosen button{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#8b92a8;cursor:pointer}
 
 /* STATS */
-.stats { margin-top: 8px; }
-.stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 6px; }
-.stat { background: #0f1117; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 8px; text-align: center; }
-.stat .n { font-size: 17px; font-weight: 700; }
-.stat .l { font-size: 10px; color: #5a6078; margin-top: 1px; }
-.form { display: flex; gap: 4px; flex-wrap: wrap; margin: 4px 0; }
-.fb { width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
-.fb.V { background: rgba(52,211,153,0.15); color: #34d399; }
-.fb.E { background: rgba(251,191,36,0.12); color: #fbbf24; }
-.fb.D { background: rgba(248,113,113,0.12); color: #f87171; }
-.games { margin-top: 6px; }
-.game { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px; }
-.game:last-child { border: none; }
-.gr { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
-.gr.V { background: rgba(52,211,153,0.15); color: #34d399; }
-.gr.E { background: rgba(251,191,36,0.12); color: #fbbf24; }
-.gr.D { background: rgba(248,113,113,0.12); color: #f87171; }
-.game .opp { flex: 1; color: #8b92a8; }
-.game .sc { font-weight: 600; }
+.stats-box{margin-top:8px;padding:10px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06)}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.stat{background:#0f1117;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px;text-align:center}
+.stat .n{font-size:16px;font-weight:700}
+.stat .l{font-size:10px;color:#5a6078;margin-top:1px}
+.form{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0}
+.fb{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.fb.V{background:rgba(52,211,153,0.15);color:#34d399}
+.fb.E{background:rgba(251,191,36,0.12);color:#fbbf24}
+.fb.D{background:rgba(248,113,113,0.12);color:#f87171}
+.games{margin-top:6px}
+.game{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px}
+.game:last-child{border:none}
+.gr{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.gr.V{background:rgba(52,211,153,0.15);color:#34d399}
+.gr.E{background:rgba(251,191,36,0.12);color:#fbbf24}
+.gr.D{background:rgba(248,113,113,0.12);color:#f87171}
+.game .opp{flex:1;color:#8b92a8}
+.game .sc{font-weight:600}
 
-/* RISK GRID */
-.risk-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 4px; }
-.risk { border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px; cursor: pointer; user-select: none; }
-.risk .rn { font-size: 13px; font-weight: 500; }
-.risk .rs { font-size: 11px; color: #8b92a8; margin-top: 2px; }
-.risk.on { background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.4); }
+/* UPLOAD IMAGEM */
+.upload-area{border:1.5px dashed rgba(255,255,255,0.15);border-radius:10px;padding:1rem;text-align:center;cursor:pointer;transition:border-color .15s;margin-top:8px}
+.upload-area:hover{border-color:#4f8ef7}
+.upload-area input{display:none}
+.upload-area p{font-size:12px;color:#5a6078;margin-top:4px}
+.upload-preview{width:100%;border-radius:8px;margin-top:8px;max-height:200px;object-fit:contain}
 
-/* MOMENT GRID */
-.moment-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-.moment { border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; }
-.moment .ml { font-size: 11px; font-weight: 700; color: #5a6078; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+/* RISK */
+.risk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px}
+.risk{border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px;cursor:pointer;user-select:none}
+.risk .rn{font-size:13px;font-weight:500}
+.risk .rs{font-size:11px;color:#8b92a8;margin-top:2px}
+.risk.on{background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.4)}
+
+/* MOMENT */
+.moment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.moment{border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px}
+.moment .ml{font-size:11px;font-weight:700;color:#5a6078;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+
+/* CONFRONTO */
+.confronto-card{background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.5rem;margin-top:1rem}
+.confronto-title{font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem}
+.tabela{width:100%;font-size:12px;border-collapse:collapse}
+.tabela th{font-size:10px;color:#5a6078;padding:3px 6px;text-align:left;font-weight:600}
+.tabela td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.tabela tr.destaque td{color:#fbbf24;font-weight:600}
+.h2h-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.h2h-box{text-align:center;border-radius:8px;padding:10px}
+.h2h-box .hn{font-size:22px;font-weight:700}
+.h2h-box .hl{font-size:10px;color:#5a6078;margin-top:2px}
 
 /* BUTTONS */
-.btn { width: 100%; padding: 13px; border-radius: 10px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 1.25rem; }
-.btn.blue { background: #4f8ef7; color: #fff; }
-.btn.purple { background: rgba(167,139,250,0.15); color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); }
-.btn.dark { background: rgba(20,40,80,0.8); color: #fff; border: 1px solid rgba(79,142,247,0.3); }
-.btn.outline { background: transparent; color: #8b92a8; border: 1px solid rgba(255,255,255,0.15); margin-top: 8px; }
-.btn:hover { opacity: .85; }
-.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn{width:100%;padding:13px;border-radius:10px;border:none;font-size:15px;font-weight:600;cursor:pointer;margin-top:1.25rem;transition:opacity .15s}
+.btn.blue{background:#4f8ef7;color:#fff}
+.btn.outline{background:transparent;color:#8b92a8;border:1px solid rgba(255,255,255,0.15);margin-top:8px}
+.btn.dark{background:rgba(20,40,80,0.9);color:#fff;border:1px solid rgba(79,142,247,0.3)}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* MISC */
-.info { background: rgba(79,142,247,0.1); border: 1px solid rgba(79,142,247,0.15); border-radius: 10px; padding: .75rem 1rem; font-size: 13px; color: #8b92a8; margin-bottom: 1rem; }
-.success { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2); border-radius: 10px; padding: .75rem 1rem; font-size: 13px; color: #34d399; margin-top: .75rem; }
-.error { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.2); border-radius: 10px; padding: .75rem 1rem; font-size: 13px; color: #f87171; margin-top: .75rem; }
-.paste { width: 100%; background: #22263a; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #f0f2f8; font-size: 13px; padding: 12px; font-family: inherit; resize: vertical; min-height: 140px; line-height: 1.5; }
-.paste:focus { outline: none; border-color: #4f8ef7; }
-.extracted { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.2); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; }
-.ext-title { font-size: 11px; font-weight: 700; color: #34d399; text-transform: uppercase; margin-bottom: .75rem; }
-.ext-match { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
-.ext-sub { font-size: 13px; color: #8b92a8; }
-.ext-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-.ext-item { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 8px 10px; }
-.ext-item .el { font-size: 11px; color: #5a6078; margin-bottom: 2px; }
-.ext-item .ev { font-size: 13px; font-weight: 500; }
-.loading { display: flex; align-items: center; gap: 10px; color: #8b92a8; font-size: 13px; padding: .5rem 0; }
-.spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.08); border-top-color: #4f8ef7; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.summary { background: #22263a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
-.summary .sm { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
-.summary .ss { font-size: 13px; color: #8b92a8; }
-
-@media (max-width: 600px) {
-  .g2, .g3, .teams, .risk-grid, .moment-grid, .ext-grid, .stat-row { grid-template-columns: 1fr; }
-}
+.info{background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.15);border-radius:10px;padding:.75rem 1rem;font-size:13px;color:#8b92a8;margin-bottom:1rem}
+.success{background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:10px;padding:.75rem 1rem;font-size:13px;color:#34d399;margin-top:.75rem}
+.error{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:.75rem 1rem;font-size:13px;color:#f87171;margin-top:.75rem}
+.loading{display:flex;align-items:center;gap:10px;color:#8b92a8;font-size:13px;padding:.5rem 0}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,0.08);border-top-color:#4f8ef7;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.extracted{background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.2);border-radius:16px;padding:1.25rem;margin-bottom:1rem}
+.ext-title{font-size:11px;font-weight:700;color:#34d399;text-transform:uppercase;margin-bottom:.75rem}
+.ext-match{font-size:17px;font-weight:700;margin-bottom:4px}
+.ext-sub{font-size:13px;color:#8b92a8}
+.ext-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.ext-item{background:rgba(0,0,0,0.2);border-radius:8px;padding:8px 10px}
+.ext-item .el{font-size:11px;color:#5a6078;margin-bottom:2px}
+.ext-item .ev{font-size:13px;font-weight:500}
+.summary{background:#22263a;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem}
+.summary .sm{font-size:17px;font-weight:700;margin-bottom:3px}
+.summary .ss{font-size:13px;color:#8b92a8}
+@media(max-width:600px){.g2,.g3,.teams,.risk-grid,.moment-grid,.ext-grid,.stat-row,.h2h-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -148,7 +140,6 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
     <div class="logo">SR</div>
     <div><h1>ScoutRef</h1><p>Análise pré-jogo · Arbitragem de futsal</p></div>
   </div>
-
   <div class="steps" id="steps">
     <div class="step active">Escala</div>
     <div class="step">Jogo</div>
@@ -163,7 +154,7 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
       <div class="card-title">Cole a escala do Cadgea</div>
       <div class="info">Copie o texto da sua escala no Cadgea e cole abaixo. A IA extrai todos os dados automaticamente.</div>
       <textarea class="paste" id="escala" placeholder="Cole aqui o texto da escala do Cadgea..."></textarea>
-      <button class="btn purple" onclick="extrair()">Extrair dados com IA</button>
+      <button class="btn blue" style="margin-top:8px;background:rgba(167,139,250,0.15);color:#a78bfa;border:1px solid rgba(167,139,250,0.3)" onclick="extrair()">Extrair dados com IA</button>
       <div id="ext-loading" style="display:none" class="loading"><div class="spin"></div><span>Extraindo...</span></div>
       <div id="ext-error"></div>
     </div>
@@ -178,8 +169,7 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
   <div id="s1" style="display:none">
     <div class="card">
       <div class="card-title">Contexto da partida</div>
-
-      <div class="section">Intensidade emocional</div>
+      <div class="sec">Intensidade emocional</div>
       <div class="chips" id="c0">
         <span onclick="flip(this)">Clássico regional</span>
         <span onclick="flip(this)">Jogo decisivo</span>
@@ -192,8 +182,7 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
         <span onclick="flip(this)">Confronto direto na tabela</span>
         <span onclick="flip(this)">1º turno tranquilo</span>
       </div>
-
-      <div class="section">Comportamento da torcida</div>
+      <div class="sec">Comportamento da torcida</div>
       <div class="chips" id="c1">
         <span onclick="flip(this)">Torcida muito presente e agitada</span>
         <span onclick="flip(this)">Torcida presente com pressão</span>
@@ -202,8 +191,7 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
         <span onclick="flip(this)">Jogo sem torcida visitante</span>
         <span onclick="flip(this)">Torcidas organizadas presentes</span>
       </div>
-
-      <div class="section">Nível técnico</div>
+      <div class="sec">Nível técnico</div>
       <div class="chips" id="c2">
         <span onclick="flip(this)">Alto nível técnico</span>
         <span onclick="flip(this)">Nível técnico médio</span>
@@ -212,8 +200,7 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
         <span onclick="flip(this)">Favorito claro</span>
         <span onclick="flip(this)">Jogo rápido e direto</span>
       </div>
-
-      <div class="section">O que está em jogo</div>
+      <div class="sec">O que está em jogo</div>
       <div class="chips" id="c3">
         <span onclick="flip(this)">Classificação em disputa</span>
         <span onclick="flip(this)">Liderança em jogo</span>
@@ -224,11 +211,9 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
         <span onclick="flip(this)">Jogo de volta</span>
         <span onclick="flip(this)">Série de resultados ruins</span>
       </div>
-
       <div class="field" style="margin-top:1rem"><label>Contexto adicional</label><textarea id="contexto" placeholder="Informações extras..."></textarea></div>
       <div class="field"><label>Link da transmissão</label><input id="link" placeholder="Cole o link ou deixe em branco"/></div>
     </div>
-
     <div class="card">
       <div class="card-title">Orientações logísticas</div>
       <div class="chips" id="c4">
@@ -249,20 +234,33 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
 
   <!-- S2: EQUIPES -->
   <div id="s2" style="display:none">
-    <div class="info">Busque as equipes no SofaScore para carregar dados automáticos.</div>
+    <!-- CLASSIFICAÇÃO — upload de imagem único -->
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title">Classificação da competição</div>
+      <div class="info" style="margin-bottom:.75rem">Tire um print da tabela no site da FPFS e envie abaixo. A IA extrai os dados automaticamente.</div>
+      <div class="upload-area" onclick="document.getElementById('img-class').click()">
+        <input type="file" id="img-class" accept="image/*" onchange="uploadClassificacao(this)"/>
+        <div style="font-size:24px">📷</div>
+        <p>Clique para enviar o print da tabela</p>
+        <p>ou arraste a imagem aqui</p>
+      </div>
+      <img id="img-class-preview" class="upload-preview" style="display:none"/>
+      <div id="class-loading" style="display:none" class="loading"><div class="spin"></div><span>Extraindo classificação da imagem...</span></div>
+      <div id="class-result" style="display:none;margin-top:10px"></div>
+    </div>
+
     <div class="teams">
       <!-- MANDANTE -->
       <div class="team-panel home">
         <div class="team-label" id="t1-label">🟢 Mandante</div>
         <div class="field">
-          <label>Classificação (cole texto ou dados da tabela)</label>
-          <textarea id="t1-class" placeholder="Ex: 3º lugar — 12pts (6J: 4V 0E 2D) | Gols: 18 marcados, 10 sofridos&#10;Ou cole qualquer texto com os dados..." style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:9px 12px;font-family:inherit;resize:vertical;min-height:60px;line-height:1.5"></textarea>
+          <label>Buscar performance com IA</label>
+          <input class="search-input" id="t1-q" placeholder="Digite o nome da equipe..."/>
+          <button class="search-btn" onclick="buscarTime('t1')" id="t1-btn">Buscar com IA</button>
         </div>
-        <div class="field">
-          <label>Últimos jogos (resultados recentes)</label>
-          <textarea id="t1-jogos" placeholder="Ex:&#10;V 3x1 vs Palotina (Casa)&#10;D 1x2 vs ACAF (Fora)&#10;V 2x0 vs Cândido (Casa)" style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:9px 12px;font-family:inherit;resize:vertical;min-height:70px;line-height:1.5"></textarea>
-        </div>
-        <div class="section">Perfil tático</div>
+        <div id="t1-chosen" style="display:none"></div>
+        <div id="t1-stats" style="display:none"></div>
+        <div class="sec">Perfil tático</div>
         <div class="chips" id="t1a">
           <span onclick="flip(this)">Jogo com pivô</span>
           <span onclick="flip(this)">Transições rápidas</span>
@@ -275,7 +273,7 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
           <span onclick="flip(this)">Bloco baixo defensivo</span>
           <span onclick="flip(this)">Alta qualidade técnica</span>
         </div>
-        <div class="section">Comportamento</div>
+        <div class="sec">Comportamento</div>
         <div class="chips" id="t1b">
           <span onclick="flip(this)">Banco agitado</span>
           <span onclick="flip(this)">Técnico muito ativo</span>
@@ -288,7 +286,7 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
           <span onclick="flip(this)">Equipe experiente</span>
           <span onclick="flip(this)">Equipe jovem e intensa</span>
         </div>
-        <div class="section">Pontos de atenção</div>
+        <div class="sec">Pontos de atenção</div>
         <div class="chips" id="t1c">
           <span onclick="flip(this)">Disputas físicas no pivô</span>
           <span onclick="flip(this)">Faltas táticas frequentes</span>
@@ -302,18 +300,18 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
         </div>
         <div class="field" style="margin-top:10px"><label>Atleta / técnico a monitorar</label><input id="t1p" placeholder="Ex: João Neto — reclama saindo da área"/></div>
       </div>
+
       <!-- VISITANTE -->
       <div class="team-panel away">
         <div class="team-label" id="t2-label">🔵 Visitante</div>
         <div class="field">
-          <label>Classificação (cole texto ou dados da tabela)</label>
-          <textarea id="t2-class" placeholder="Ex: 1º lugar — 18pts (6J: 6V 0E 0D) | Gols: 24 marcados, 6 sofridos&#10;Ou cole qualquer texto com os dados..." style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:9px 12px;font-family:inherit;resize:vertical;min-height:60px;line-height:1.5"></textarea>
+          <label>Buscar performance com IA</label>
+          <input class="search-input" id="t2-q" placeholder="Digite o nome da equipe..."/>
+          <button class="search-btn" onclick="buscarTime('t2')" id="t2-btn">Buscar com IA</button>
         </div>
-        <div class="field">
-          <label>Últimos jogos (resultados recentes)</label>
-          <textarea id="t2-jogos" placeholder="Ex:&#10;V 2x0 vs AAEMA (Fora)&#10;V 3x1 vs FAC (Casa)&#10;E 1x1 vs Palotina (Fora)" style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:9px 12px;font-family:inherit;resize:vertical;min-height:70px;line-height:1.5"></textarea>
-        </div>
-        <div class="section">Perfil tático</div>
+        <div id="t2-chosen" style="display:none"></div>
+        <div id="t2-stats" style="display:none"></div>
+        <div class="sec">Perfil tático</div>
         <div class="chips" id="t2a">
           <span onclick="flip(this)">Jogo com pivô</span>
           <span onclick="flip(this)">Transições rápidas</span>
@@ -326,7 +324,7 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
           <span onclick="flip(this)">Bloco baixo defensivo</span>
           <span onclick="flip(this)">Alta qualidade técnica</span>
         </div>
-        <div class="section">Comportamento</div>
+        <div class="sec">Comportamento</div>
         <div class="chips" id="t2b">
           <span onclick="flip(this)">Banco agitado</span>
           <span onclick="flip(this)">Técnico muito ativo</span>
@@ -339,7 +337,7 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
           <span onclick="flip(this)">Equipe experiente</span>
           <span onclick="flip(this)">Equipe jovem e intensa</span>
         </div>
-        <div class="section">Pontos de atenção</div>
+        <div class="sec">Pontos de atenção</div>
         <div class="chips" id="t2c">
           <span onclick="flip(this)">Disputas físicas no pivô</span>
           <span onclick="flip(this)">Faltas táticas frequentes</span>
@@ -354,14 +352,13 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
         <div class="field" style="margin-top:10px"><label>Atleta / técnico a monitorar</label><input id="t2p" placeholder="Ex: Técnico Dalton — pode tumultar"/></div>
       </div>
     </div>
-    <div class="card" style="margin-top:1rem">
-      <div class="card-title">Confronto direto (histórico entre as equipes)</div>
-      <textarea id="confronto" placeholder="Cole aqui o histórico de confrontos diretos entre as equipes...&#10;Ex:&#10;AAEMA 2x1 São Joseense (Série Prata 2025)&#10;São Joseense 3x0 AAEMA (Copa União 2025)&#10;AAEMA 1x1 São Joseense (Série Prata 2024)" style="width:100%;background:#22263a;border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#f0f2f8;font-size:13px;padding:9px 12px;font-family:inherit;resize:vertical;min-height:80px;line-height:1.5"></textarea>
-    </div>
-    <!-- CLASSIFICAÇÃO E CONFRONTO DIRETO -->
-    <div id="confronto-area" style="display:none;background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.5rem;margin-top:1rem"></div>
 
-    <button class="btn blue" onclick="ir(3)">Próximo →</button>
+    <!-- CONFRONTO DIRETO -->
+    <div id="confronto-card" style="display:none" class="confronto-card">
+      <div class="confronto-title">Classificação e confronto direto</div>
+      <div id="confronto-content"></div>
+    </div>
+    <button class="btn blue" style="margin-top:1rem" onclick="ir(3)">Próximo →</button>
   </div>
 
   <!-- S3: PLANO -->
@@ -372,7 +369,7 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
         <div class="risk" onclick="this.classList.toggle('on')"><div class="rn">Região do pivô</div><div class="rs">Disputas físicas, sem bola</div></div>
         <div class="risk" onclick="this.classList.toggle('on')"><div class="rn">Meio de quadra</div><div class="rs">Transições, faltas táticas</div></div>
         <div class="risk" onclick="this.classList.toggle('on')"><div class="rn">Laterais ofensivas</div><div class="rs">Corredores, infiltrações</div></div>
-        <div class="risk" onclick="this.classList.toggle('on')"><div class="rn">Bancos / área técnica</div><div class="rs">CT fora do lugar, agitação</div></div>
+        <div class="risk" onclick="this.classList.toggle('on')"><div class="rn">Bancos / área técnica</div><div class="rs">CT fora do lugar</div></div>
         <div class="risk" onclick="this.classList.toggle('on')"><div class="rn">Contra-ataque</div><div class="rs">Faltas táticas, cartão</div></div>
         <div class="risk" onclick="this.classList.toggle('on')"><div class="rn">Saída de bola</div><div class="rs">Pressão alta, arremesso</div></div>
       </div>
@@ -462,397 +459,344 @@ body { background: #0f1117; color: #f0f2f8; font-family: -apple-system, sans-ser
     <div id="gen-error"></div>
     <div id="pdf-area" style="display:none">
       <div class="success">Análise gerada! Clique abaixo para baixar o PDF.</div>
-      <button class="btn dark" id="pdf-btn" onclick="pdf()">Baixar PDF profissional</button>
+      <button class="btn dark" id="pdf-btn" onclick="gerarPDF()">Baixar PDF profissional</button>
       <button class="btn outline" onclick="if(confirm('Limpar tudo?'))location.reload()">Nova análise</button>
     </div>
   </div>
 </div>
 
 <script>
-// Estado global
-const D = { ex: {}, t1: null, t2: null, t1s: null, t2s: null, analysis: null };
-let timers = {};
+const D = { ex:{}, t1:null, t2:null, t1s:null, t2s:null, analysis:null, matchCtx:null, classImg:null };
 
-// ── CHIP TOGGLE ──────────────────────────────────────────
-// Função ÚNICA e SIMPLES — apenas toggle da classe 'on'
-function flip(el) {
-  el.classList.toggle('on');
-}
+// CHIP — simples
+function flip(el){ el.classList.toggle('on'); }
 
-// ── NAVEGAÇÃO ────────────────────────────────────────────
-function ir(n) {
-  for (let i = 0; i < 5; i++) {
-    document.getElementById('s' + i).style.display = i === n ? 'block' : 'none';
-    const dot = document.querySelectorAll('.step')[i];
-    dot.className = 'step' + (i === n ? ' active' : i < n ? ' done' : '');
+// NAVEGAÇÃO
+function ir(n){
+  for(let i=0;i<5;i++){
+    document.getElementById('s'+i).style.display = i===n?'block':'none';
+    document.querySelectorAll('.step')[i].className = 'step'+(i===n?' active':i<n?' done':'');
   }
-  if (n === 4) buildSummary();
-  window.scrollTo(0, 0);
+  if(n===4) buildSummary();
+  window.scrollTo(0,0);
 }
 
-// ── EXTRAÇÃO ─────────────────────────────────────────────
-async function extrair() {
+// HELPERS
+function on(id){ return[...document.querySelectorAll('#'+id+' span.on')].map(c=>c.textContent).join(', '); }
+function risks(){ return[...document.querySelectorAll('.risk.on')].map(c=>c.querySelector('.rn').textContent).join(', '); }
+
+// EXTRAÇÃO ESCALA
+async function extrair(){
   const text = document.getElementById('escala').value.trim();
-  if (!text) { alert('Cole o texto da escala primeiro.'); return; }
-  document.querySelector('[onclick="extrair()"]').disabled = true;
-  document.getElementById('ext-loading').style.display = 'flex';
-  document.getElementById('ext-error').innerHTML = '';
-  try {
-    const r = await fetch('/.netlify/functions/extract-escala', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
-    });
+  if(!text){ alert('Cole o texto da escala primeiro.'); return; }
+  document.querySelector('[onclick="extrair()"]').disabled=true;
+  document.getElementById('ext-loading').style.display='flex';
+  document.getElementById('ext-error').innerHTML='';
+  try{
+    const r = await fetch('/.netlify/functions/extract-escala',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
     const p = await r.json();
-    if (p.error) throw new Error(p.error);
-    D.ex = p;
-    document.getElementById('t1-label').textContent = '🟢 ' + (p.mandante || 'Mandante');
-    document.getElementById('t2-label').textContent = '🔵 ' + (p.visitante || 'Visitante');
-    document.getElementById('ext-card').innerHTML = `
+    if(p.error) throw new Error(p.error);
+    D.ex=p;
+    document.getElementById('t1-label').textContent='🟢 '+(p.mandante||'Mandante');
+    document.getElementById('t2-label').textContent='🔵 '+(p.visitante||'Visitante');
+    document.getElementById('t1-q').value=p.mandante||'';
+    document.getElementById('t2-q').value=p.visitante||'';
+    document.getElementById('ext-card').innerHTML=`
       <div class="ext-title">Escala extraída com sucesso</div>
-      <div class="ext-match">${p.mandante || '—'} × ${p.visitante || '—'}</div>
-      <div class="ext-sub">${p.comp || ''} ${p.fase ? '· ' + p.fase : ''}</div>
+      <div class="ext-match">${p.mandante||'—'} × ${p.visitante||'—'}</div>
+      <div class="ext-sub">${p.comp||''} ${p.fase?'· '+p.fase:''}</div>
       <div class="ext-grid">
-        <div class="ext-item"><div class="el">Data e hora</div><div class="ev">${p.datahora || '—'}</div></div>
-        <div class="ext-item"><div class="el">Ginásio · Cidade</div><div class="ev">${p.ginasio || '—'} · ${p.cidade || '—'}</div></div>
-        <div class="ext-item"><div class="el">Árbitro 1</div><div class="ev">${p.arb1 || '—'}</div></div>
-        <div class="ext-item"><div class="el">Árbitro 2</div><div class="ev">${p.arb2 || '—'}</div></div>
-        <div class="ext-item"><div class="el">Anotador(a)</div><div class="ev">${p.anotador || '—'}</div></div>
-        <div class="ext-item"><div class="el">Cronometrista</div><div class="ev">${p.crono || '—'}</div></div>
+        <div class="ext-item"><div class="el">Data e hora</div><div class="ev">${p.datahora||'—'}</div></div>
+        <div class="ext-item"><div class="el">Ginásio · Cidade</div><div class="ev">${p.ginasio||'—'} · ${p.cidade||'—'}</div></div>
+        <div class="ext-item"><div class="el">Árbitro 1</div><div class="ev">${p.arb1||'—'}</div></div>
+        <div class="ext-item"><div class="el">Árbitro 2</div><div class="ev">${p.arb2||'—'}</div></div>
+        <div class="ext-item"><div class="el">Anotador(a)</div><div class="ev">${p.anotador||'—'}</div></div>
+        <div class="ext-item"><div class="el">Cronometrista</div><div class="ev">${p.crono||'—'}</div></div>
       </div>`;
-    document.getElementById('ext-result').style.display = 'block';
-  } catch (e) {
-    document.getElementById('ext-error').innerHTML = `<div class="error">Erro: ${e.message}</div>`;
-    document.getElementById('ext-result').style.display = 'block';
+    document.getElementById('ext-result').style.display='block';
+  }catch(e){
+    document.getElementById('ext-error').innerHTML=`<div class="error">Erro: ${e.message}</div>`;
+    document.getElementById('ext-result').style.display='block';
   }
-  document.getElementById('ext-loading').style.display = 'none';
-  document.querySelector('[onclick="extrair()"]').disabled = false;
+  document.getElementById('ext-loading').style.display='none';
+  document.querySelector('[onclick="extrair()"]').disabled=false;
 }
 
-// ── BUSCA SOFASCORE ──────────────────────────────────────
-async function buscar(input, team) {
-  const q = input.value.trim();
-  const res = document.getElementById(team + '-res');
-  clearTimeout(timers[team]);
-  if (q.length < 2) { res.style.display = 'none'; return; }
-  res.innerHTML = `<div class="sri" onclick="escolher('${team}','${q.replace(/'/g,"\'").replace(/"/g,'\"')}')">
-    <div>Buscar "<strong>${q}</strong>" com IA</div>
-    <div class="sub">Pesquisa classificação, forma e resultados recentes</div>
+// UPLOAD CLASSIFICAÇÃO
+function uploadClassificacao(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const b64 = e.target.result.split(',')[1];
+    D.classImg = b64;
+    document.getElementById('img-class-preview').src = e.target.result;
+    document.getElementById('img-class-preview').style.display='block';
+    document.getElementById('class-loading').style.display='flex';
+    document.getElementById('class-result').style.display='none';
+    try{
+      const r = await fetch('/.netlify/functions/extract-image',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({image:b64, type:'classificacao'})
+      });
+      const d = await r.json();
+      if(d.error) throw new Error(d.error);
+      D.matchCtx = { classificacaoGeral: d };
+      renderClassificacao(d);
+    }catch(err){
+      document.getElementById('class-result').innerHTML=`<div class="error">Erro: ${err.message}</div>`;
+      document.getElementById('class-result').style.display='block';
+    }
+    document.getElementById('class-loading').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderClassificacao(d){
+  const el = document.getElementById('class-result');
+  if(!d.tabela?.length){ el.innerHTML='<div style="font-size:12px;color:#5a6078">Sem tabela encontrada na imagem.</div>'; el.style.display='block'; return; }
+  let h = `<div style="font-size:11px;font-weight:700;color:#34d399;text-transform:uppercase;margin-bottom:8px">${d.competicao||'Classificação extraída'}</div>
+  <table class="tabela"><tr><th>#</th><th>Equipe</th><th>Pts</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th></tr>`;
+  const m = (D.ex.mandante||'').toLowerCase().substring(0,5);
+  const v = (D.ex.visitante||'').toLowerCase().substring(0,5);
+  d.tabela.forEach(row=>{
+    const dest = row.equipe?.toLowerCase().includes(m) || row.equipe?.toLowerCase().includes(v);
+    h += `<tr${dest?' class="destaque"':''}><td>${row.posicao}º</td><td>${row.equipe}</td><td>${row.pontos}</td><td>${row.jogos}</td><td>${row.vitorias}</td><td>${row.empates}</td><td>${row.derrotas}</td><td>${row.golsPro||0}</td><td>${row.golsContra||0}</td></tr>`;
+  });
+  h += '</table>';
+  el.innerHTML = h;
+  el.style.display='block';
+}
+
+// BUSCA PERFORMANCE INDIVIDUAL
+async function buscarTime(team){
+  const nome = document.getElementById(team+'-q').value.trim();
+  if(!nome){ alert('Digite o nome da equipe.'); return; }
+  const btn = document.getElementById(team+'-btn');
+  btn.disabled=true; btn.textContent='Buscando...';
+  document.getElementById(team+'-chosen').style.display='block';
+  document.getElementById(team+'-chosen').innerHTML=`<div class="team-chosen">${nome}<button onclick="limparTime('${team}')">Trocar</button></div>`;
+  D[team]={name:nome};
+  const el = document.getElementById(team+'-stats');
+  el.style.display='block';
+  el.innerHTML='<div class="loading"><div class="spin"></div><span>Buscando performance com IA...</span></div>';
+  try{
+    const r = await fetch('/.netlify/functions/team-data?teamName='+encodeURIComponent(nome));
+    const d = await r.json();
+    D[team+'s']=d;
+    renderStats(team,d);
+    // Se ambas equipes preenchidas, busca confronto
+    if(D.t1&&D.t2) buscarConfronto();
+  }catch(e){
+    el.innerHTML='<div style="font-size:12px;color:#5a6078;padding:4px 0">Sem dados disponíveis.</div>';
+  }
+  btn.disabled=false; btn.textContent='Buscar com IA';
+}
+
+function limparTime(team){
+  D[team]=null; D[team+'s']=null;
+  document.getElementById(team+'-chosen').style.display='none';
+  document.getElementById(team+'-stats').style.display='none';
+  document.getElementById(team+'-q').value='';
+}
+
+function renderStats(team,d){
+  const el=document.getElementById(team+'-stats');
+  const s=d.classificacao; const g=d.ultimosJogos||[]; const f=d.forma||'';
+  let h='<div class="stats-box">';
+  if(d.contexto) h+=`<div style="font-size:12px;color:#8b92a8;line-height:1.5;margin-bottom:8px">${d.contexto}</div>`;
+  if(s&&s.posicao) h+=`<div class="stat-row">
+    <div class="stat"><div class="n">${s.posicao}º</div><div class="l">Pos.</div></div>
+    <div class="stat"><div class="n">${s.pontos||0}</div><div class="l">Pts</div></div>
+    <div class="stat"><div class="n">${s.golsPro||0}</div><div class="l">Gols</div></div>
+    <div class="stat"><div class="n">${s.golsContra||0}</div><div class="l">Sofreu</div></div>
   </div>`;
-  res.style.display = 'block';
+  if(f) h+=`<div class="form">${f.split('').map(r=>`<div class="fb ${r}">${r}</div>`).join('')}</div>`;
+  if(g.length){h+='<div class="games">';g.forEach(x=>{h+=`<div class="game"><div class="gr ${x.resultado}">${x.resultado}</div><div class="opp">${x.adversario}</div><div class="sc">${x.placar}</div><div style="font-size:10px;color:#5a6078">${x.mandante?'Casa':'Fora'}</div></div>`;});h+='</div>';}
+  h+='</div>';
+  el.innerHTML=h||'<div style="font-size:12px;color:#5a6078">Sem dados.</div>';
 }
 
-async function escolher(team, nome) {
-  document.getElementById(team + '-res').style.display = 'none';
-  document.getElementById(team + '-q').value = '';
-  document.getElementById(team + '-chosen').style.display = 'block';
-  document.getElementById(team + '-chosen').innerHTML =
-    `<div class="team-chosen">${nome}<button onclick="limparTime('${team}')">Trocar</button></div>`;
-  D[team] = { name: nome };
-
-  // Busca performance individual
-  const el = document.getElementById(team + '-stats');
-  el.style.display = 'block';
-  el.innerHTML = '<div class="loading"><div class="spin"></div><span>Buscando performance com IA...</span></div>';
-  try {
-    const r = await fetch('/.netlify/functions/team-data?teamName=' + encodeURIComponent(nome));
-    const d = await r.json();
-    D[team + 's'] = d;
-    renderStats(team, d);
-  } catch(e) {
-    el.innerHTML = '<div style="font-size:12px;color:#5a6078;padding:4px 0">Sem dados disponíveis.</div>';
-  }
-
-  // Se ambas equipes estão preenchidas, busca contexto do confronto
-  const outroTime = team === 't1' ? 't2' : 't1';
-  if (D[outroTime]) {
-    buscarConfrontoEClassificacao();
-  }
-}
-
-async function buscarConfrontoEClassificacao() {
-  const m = D.t1?.name;
-  const v = D.t2?.name;
-  if (!m || !v) return;
-
-  const el = document.getElementById('confronto-area');
-  if (!el) return;
-  el.style.display = 'block';
-  el.innerHTML = '<div class="loading"><div class="spin"></div><span>Buscando classificação e confronto direto...</span></div>';
-
-  try {
-    const r = await fetch('/.netlify/functions/match-context', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mandante: m, visitante: v, competicao: D.ex?.comp || '' })
+// CONFRONTO DIRETO
+async function buscarConfronto(){
+  const card=document.getElementById('confronto-card');
+  card.style.display='block';
+  document.getElementById('confronto-content').innerHTML='<div class="loading"><div class="spin"></div><span>Buscando confronto direto...</span></div>';
+  try{
+    const r=await fetch('/.netlify/functions/match-context',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mandante:D.t1.name,visitante:D.t2.name,competicao:D.ex?.comp||''})
     });
-    const d = await r.json();
-    D.matchContext = d;
-    renderConfrontoEClassificacao(d, m, v);
-  } catch(e) {
-    el.innerHTML = '<div style="font-size:12px;color:#f87171">Erro ao buscar confronto.</div>';
+    const d=await r.json();
+    D.matchCtx={...D.matchCtx,...d};
+    renderConfronto(d);
+  }catch(e){
+    document.getElementById('confronto-content').innerHTML='<div style="font-size:12px;color:#5a6078">Sem dados de confronto.</div>';
   }
 }
 
-function renderConfrontoEClassificacao(d, mandante, visitante) {
-  const el = document.getElementById('confronto-area');
-  if (!el) return;
-  let h = '';
-
-  // Classificação geral
-  if (d.classificacaoGeral?.tabela?.length) {
-    h += `<div style="margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">${d.classificacaoGeral.competicao || 'Classificação'}</div>
-      <table style="width:100%;font-size:12px;border-collapse:collapse">
-        <tr style="color:#5a6078;font-size:10px">
-          <td style="padding:3px 4px">#</td><td style="padding:3px 4px">Equipe</td>
-          <td style="padding:3px 4px;text-align:center">Pts</td>
-          <td style="padding:3px 4px;text-align:center">J</td>
-          <td style="padding:3px 4px;text-align:center">V</td>
-          <td style="padding:3px 4px;text-align:center">E</td>
-          <td style="padding:3px 4px;text-align:center">D</td>
-          <td style="padding:3px 4px;text-align:center">SG</td>
-        </tr>`;
-    d.classificacaoGeral.tabela.forEach(row => {
-      const destaque = row.equipe?.toLowerCase().includes(mandante.toLowerCase().substring(0,4)) ||
-                       row.equipe?.toLowerCase().includes(visitante.toLowerCase().substring(0,4));
-      const cor = destaque ? 'color:#fbbf24;font-weight:600' : 'color:#f0f2f8';
-      h += `<tr style="${cor}">
-        <td style="padding:3px 4px">${row.posicao}º</td>
-        <td style="padding:3px 4px">${row.equipe}</td>
-        <td style="padding:3px 4px;text-align:center">${row.pontos}</td>
-        <td style="padding:3px 4px;text-align:center">${row.jogos}</td>
-        <td style="padding:3px 4px;text-align:center">${row.vitorias}</td>
-        <td style="padding:3px 4px;text-align:center">${row.empates}</td>
-        <td style="padding:3px 4px;text-align:center">${row.derrotas}</td>
-        <td style="padding:3px 4px;text-align:center">${(row.golsPro||0)-(row.golsContra||0)}</td>
-      </tr>`;
-    });
-    h += '</table></div>';
-  }
-
-  // Confronto direto
-  if (d.confrontoDireto) {
-    const c = d.confrontoDireto;
-    h += `<div style="margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;color:#4f8ef7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Confronto direto</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
-        <div style="text-align:center;background:rgba(52,211,153,0.1);border-radius:8px;padding:8px">
-          <div style="font-size:18px;font-weight:700;color:#34d399">${c.vitoriasMandante||0}</div>
-          <div style="font-size:10px;color:#5a6078">${mandante.split(' ')[0]}</div>
-        </div>
-        <div style="text-align:center;background:rgba(251,191,36,0.1);border-radius:8px;padding:8px">
-          <div style="font-size:18px;font-weight:700;color:#fbbf24">${c.empates||0}</div>
-          <div style="font-size:10px;color:#5a6078">Empates</div>
-        </div>
-        <div style="text-align:center;background:rgba(79,142,247,0.1);border-radius:8px;padding:8px">
-          <div style="font-size:18px;font-weight:700;color:#4f8ef7">${c.vitoriasVisitante||0}</div>
-          <div style="font-size:10px;color:#5a6078">${visitante.split(' ')[0]}</div>
-        </div>
-      </div>`;
-    if (c.ultimosJogos?.length) {
-      c.ultimosJogos.slice(0,3).forEach(j => {
-        h += `<div style="font-size:12px;color:#8b92a8;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06)">${j.data} · ${j.mandante} ${j.placar} ${j.visitante}</div>`;
+function renderConfronto(d){
+  let h='';
+  if(d.confrontoDireto){
+    const c=d.confrontoDireto;
+    h+=`<div class="h2h-grid">
+      <div class="h2h-box" style="background:rgba(52,211,153,0.1)"><div class="hn" style="color:#34d399">${c.vitoriasMandante||0}</div><div class="hl">${(D.t1?.name||'').split(' ')[0]}</div></div>
+      <div class="h2h-box" style="background:rgba(251,191,36,0.1)"><div class="hn" style="color:#fbbf24">${c.empates||0}</div><div class="hl">Empates</div></div>
+      <div class="h2h-box" style="background:rgba(79,142,247,0.1)"><div class="hn" style="color:#4f8ef7">${c.vitoriasVisitante||0}</div><div class="hl">${(D.t2?.name||'').split(' ')[0]}</div></div>
+    </div>`;
+    if(c.ultimosJogos?.length){
+      c.ultimosJogos.slice(0,3).forEach(j=>{
+        h+=`<div style="font-size:12px;color:#8b92a8;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)">${j.data} · ${j.mandante} ${j.placar} ${j.visitante}</div>`;
       });
     }
-    if (c.resumo) h += `<div style="font-size:12px;color:#8b92a8;margin-top:8px;font-style:italic">${c.resumo}</div>`;
-    h += '</div>';
+    if(c.resumo) h+=`<div style="font-size:12px;color:#8b92a8;margin-top:8px;font-style:italic">${c.resumo}</div>`;
   }
-
-  if (d.contextoConfrontoAtual) {
-    h += `<div style="font-size:12px;color:#8b92a8;line-height:1.5;padding:8px;background:rgba(255,255,255,0.04);border-radius:8px">${d.contextoConfrontoAtual}</div>`;
-  }
-
-  el.innerHTML = h || '<div style="font-size:12px;color:#5a6078">Sem dados de confronto encontrados.</div>';
+  if(d.contextoConfrontoAtual) h+=`<div style="font-size:12px;color:#8b92a8;margin-top:10px;line-height:1.5;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px">${d.contextoConfrontoAtual}</div>`;
+  document.getElementById('confronto-content').innerHTML=h||'<div style="font-size:12px;color:#5a6078">Sem dados.</div>';
 }
 
-function limparTime(team) {
-  D[team] = null; D[team + 's'] = null;
-  document.getElementById(team + '-chosen').style.display = 'none';
-  document.getElementById(team + '-stats').style.display = 'none';
-  document.getElementById(team + '-q').value = '';
+// SUMMARY
+function buildSummary(){
+  const ex=D.ex||{};
+  document.getElementById('summary').innerHTML=`
+    <div class="sm">${ex.mandante||'Mandante'} × ${ex.visitante||'Visitante'}</div>
+    <div class="ss">${ex.comp||''} · ${ex.fase||''} · ${ex.datahora||''}</div>
+    <div class="ss" style="margin-top:4px">Árbitro: ${ex.arb1||'—'}</div>`;
 }
 
-function renderStats(team, d) {
-  const el = document.getElementById(team + '-stats');
-  const s = d.standings; const g = d.recentGames || []; const f = d.summary?.form || '';
-  let h = '';
-  if (s && s.position) h += `<div class="stat-row">
-    <div class="stat"><div class="n">${s.position}º</div><div class="l">Pos.</div></div>
-    <div class="stat"><div class="n">${s.points}</div><div class="l">Pts</div></div>
-    <div class="stat"><div class="n">${s.goalsFor||0}</div><div class="l">Gols</div></div>
-    <div class="stat"><div class="n">${s.goalsAgainst||0}</div><div class="l">Sofreu</div></div>
-  </div>`;
-  if (f) h += `<div class="form">${f.split('').map(r => `<div class="fb ${r}">${r}</div>`).join('')}</div>`;
-  if (g.length) { h += '<div class="games">'; g.forEach(x => { h += `<div class="game"><div class="gr ${x.result}">${x.result}</div><div class="opp">${x.opponent}</div><div class="sc">${x.score}</div><div style="font-size:10px;color:#5a6078">${x.home ? 'Casa' : 'Fora'}</div></div>`; }); h += '</div>'; }
-  if (d.contexto) h += `<div style="font-size:12px;color:#8b92a8;margin-top:8px;line-height:1.5;padding:8px;background:rgba(255,255,255,0.04);border-radius:8px">${d.contexto}</div>`;
-  el.innerHTML = h || '<div style="font-size:12px;color:#5a6078">Sem dados encontrados.</div>';
-}
+// GERAR ANÁLISE
+async function gerar(){
+  const ex=D.ex||{};
+  document.getElementById('gen-btn').disabled=true;
+  document.getElementById('gen-loading').style.display='flex';
+  document.getElementById('gen-error').innerHTML='';
+  document.getElementById('pdf-area').style.display='none';
 
-// ── HELPERS ──────────────────────────────────────────────
-function on(id) { return [...document.querySelectorAll('#' + id + ' span.on')].map(c => c.textContent).join(', '); }
-function risks() { return [...document.querySelectorAll('.risk.on')].map(c => c.querySelector('.rn').textContent).join(', '); }
-
-// ── SUMMARY ──────────────────────────────────────────────
-function buildSummary() {
-  const ex = D.ex;
-  document.getElementById('summary').innerHTML = `
-    <div class="sm">${ex.mandante || 'Mandante'} × ${ex.visitante || 'Visitante'}</div>
-    <div class="ss">${ex.comp || ''} · ${ex.fase || ''} · ${ex.datahora || ''}</div>
-    <div class="ss" style="margin-top:4px">Árbitro: ${ex.arb1 || '—'}</div>`;
-}
-
-// ── GERAR ANÁLISE ────────────────────────────────────────
-async function gerar() {
-  const ex = D.ex;
-  document.getElementById('gen-btn').disabled = true;
-  document.getElementById('gen-loading').style.display = 'flex';
-  document.getElementById('gen-error').innerHTML = '';
-  document.getElementById('pdf-area').style.display = 'none';
-
-  const payload = {
-    matchData: {
-      comp: ex.comp || '', fase: ex.fase || '', datahora: ex.datahora || '',
-      ginasio: ex.ginasio || '', cidade: ex.cidade || '',
-      mandante: ex.mandante || '', visitante: ex.visitante || '',
-      contexto: document.getElementById('contexto').value,
-      intensidade: on('c0'), torcida: on('c1'), nivel: on('c2'), emjogo: on('c3')
+  const payload={
+    matchData:{
+      comp:ex.comp||'',fase:ex.fase||'',datahora:ex.datahora||'',
+      ginasio:ex.ginasio||'',cidade:ex.cidade||'',
+      mandante:ex.mandante||'',visitante:ex.visitante||'',
+      contexto:document.getElementById('contexto').value,
+      intensidade:on('c0'),torcida:on('c1'),nivel:on('c2'),emjogo:on('c3')
     },
-    arbData: {
-      arb1: ex.arb1 || '', arb2: ex.arb2 || '',
-      anotador: ex.anotador || '', crono: ex.crono || '',
-      link: document.getElementById('link').value,
-      logistica: on('c4'),
-      t1tatico: on('t1a'), t1comportamento: on('t1b'), t1atencao: on('t1c'),
-      t1player: document.getElementById('t1p').value,
-      t1class: document.getElementById('t1-class').value,
-      t1jogos: document.getElementById('t1-jogos').value,
-      t2tatico: on('t2a'), t2comportamento: on('t2b'), t2atencao: on('t2c'),
-      t2player: document.getElementById('t2p').value,
-      t2class: document.getElementById('t2-class').value,
-      t2jogos: document.getElementById('t2-jogos').value,
-      confronto: document.getElementById('confronto').value
+    arbData:{
+      arb1:ex.arb1||'',arb2:ex.arb2||'',
+      anotador:ex.anotador||'',crono:ex.crono||'',
+      link:document.getElementById('link').value,
+      logistica:on('c4'),
+      t1tatico:on('t1a'),t1comportamento:on('t1b'),t1atencao:on('t1c'),
+      t1player:document.getElementById('t1p').value,
+      t2tatico:on('t2a'),t2comportamento:on('t2b'),t2atencao:on('t2c'),
+      t2player:document.getElementById('t2p').value
     },
-    team1Data: D.t1s, team2Data: D.t2s, matchContext: D.matchContext||null,
-    planData: {
-      riscos: risks(), atencao: on('c5'),
-      inicio: on('mc0'), durante: on('mc1'), final: on('mc2'),
-      objetivo: on('c6') + ' ' + document.getElementById('objetivo').value
+    team1Data:D.t1s, team2Data:D.t2s,
+    matchContext:D.matchCtx||null,
+    planData:{
+      riscos:risks(),atencao:on('c5'),
+      inicio:on('mc0'),durante:on('mc1'),final:on('mc2'),
+      objetivo:on('c6')+' '+document.getElementById('objetivo').value
     }
   };
 
-  try {
-    const r = await fetch('/.netlify/functions/generate-pdf', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
-    D.analysis = d.analysis;
-    D._payload = payload;
-    document.getElementById('pdf-area').style.display = 'block';
-  } catch (e) {
-    document.getElementById('gen-error').innerHTML = `<div class="error">Erro: ${e.message}</div>`;
+  try{
+    const r=await fetch('/.netlify/functions/generate-pdf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(d.error) throw new Error(d.error);
+    D.analysis=d.analysis; D._payload=payload;
+    document.getElementById('pdf-area').style.display='block';
+  }catch(e){
+    document.getElementById('gen-error').innerHTML=`<div class="error">Erro: ${e.message}</div>`;
   }
-  document.getElementById('gen-loading').style.display = 'none';
-  document.getElementById('gen-btn').disabled = false;
+  document.getElementById('gen-loading').style.display='none';
+  document.getElementById('gen-btn').disabled=false;
 }
 
-// ── GERAR PDF ────────────────────────────────────────────
-async function pdf() {
-  document.getElementById('pdf-btn').disabled = true;
-  document.getElementById('pdf-btn').textContent = 'Gerando PDF...';
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const W = 210, H = 297;
-  const ex = D.ex || {};
-  const analysis = D.analysis || '';
-  const BG = [15,17,23], BG2 = [26,29,39], BG3 = [34,38,58];
-  const BLUE = [79,142,247], AMBER = [251,191,36], WHITE = [240,242,248], MUTED = [139,146,168];
+// PDF
+async function gerarPDF(){
+  document.getElementById('pdf-btn').disabled=true;
+  document.getElementById('pdf-btn').textContent='Gerando PDF...';
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,H=297;
+  const ex=D.ex||{};
+  const analysis=D.analysis||'';
+  const BG=[15,17,23],BG2=[26,29,39],BG3=[34,38,58];
+  const BLUE=[79,142,247],AMBER=[251,191,36],WHITE=[240,242,248],MUTED=[139,146,168],GREEN=[52,211,153];
 
-  doc.setFillColor(...BG); doc.rect(0, 0, W, H, 'F');
-  doc.setFillColor(...BG2); doc.rect(0, 0, W, 45, 'F');
-  doc.setFillColor(...BLUE); doc.rect(0, 0, W, 3, 'F');
+  doc.setFillColor(...BG);doc.rect(0,0,W,H,'F');
+  doc.setFillColor(...BG2);doc.rect(0,0,W,45,'F');
+  doc.setFillColor(...BLUE);doc.rect(0,0,W,3,'F');
 
-  const isLNF = (ex.comp || '').toUpperCase().includes('LNF');
-  doc.setFontSize(8); doc.setTextColor(...MUTED);
-  doc.text(isLNF ? 'CBFS / LNF' : 'FPFS / CBFS', 15, 13);
+  const isLNF=(ex.comp||'').toUpperCase().includes('LNF');
+  doc.setFontSize(8);doc.setTextColor(...MUTED);
+  doc.text(isLNF?'CBFS / LNF':'FPFS / CBFS',15,13);
 
-  doc.setFontSize(20); doc.setTextColor(...WHITE); doc.setFont('helvetica', 'bold');
-  doc.text('ANÁLISE PRÉ-JOGO', W / 2, 17, { align: 'center' });
-  doc.setFontSize(9); doc.setTextColor(...BLUE); doc.setFont('helvetica', 'normal');
-  doc.text((ex.comp || 'Competição').toUpperCase(), W / 2, 24, { align: 'center' });
-  doc.setFontSize(14); doc.setTextColor(...WHITE); doc.setFont('helvetica', 'bold');
-  doc.text(`${ex.mandante || 'MANDANTE'}  ×  ${ex.visitante || 'VISITANTE'}`, W / 2, 33, { align: 'center' });
-  doc.setFontSize(8); doc.setTextColor(...MUTED); doc.setFont('helvetica', 'normal');
-  doc.text(`${ex.fase || ''} · ${ex.datahora || ''} · ${ex.ginasio || ''} · ${ex.cidade || ''}`, W / 2, 39, { align: 'center' });
+  doc.setFontSize(20);doc.setTextColor(...WHITE);doc.setFont('helvetica','bold');
+  doc.text('ANÁLISE PRÉ-JOGO',W/2,17,{align:'center'});
+  doc.setFontSize(9);doc.setTextColor(...BLUE);doc.setFont('helvetica','normal');
+  doc.text((ex.comp||'Competição').toUpperCase(),W/2,24,{align:'center'});
+  doc.setFontSize(14);doc.setTextColor(...WHITE);doc.setFont('helvetica','bold');
+  doc.text(`${ex.mandante||'MANDANTE'}  ×  ${ex.visitante||'VISITANTE'}`,W/2,33,{align:'center'});
+  doc.setFontSize(8);doc.setTextColor(...MUTED);doc.setFont('helvetica','normal');
+  doc.text(`${ex.fase||''} · ${ex.datahora||''} · ${ex.ginasio||''} · ${ex.cidade||''}`,W/2,39,{align:'center'});
 
-  doc.setFillColor(...BG3); doc.roundedRect(10, 48, W - 20, 22, 2, 2, 'F');
-  doc.setFontSize(7); doc.setTextColor(...AMBER); doc.setFont('helvetica', 'bold');
-  doc.text('EQUIPE DE ARBITRAGEM', 15, 54);
-  doc.setTextColor(...WHITE); doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
-  doc.text(`Árbitro 1: ${ex.arb1 || '—'}`, 15, 59);
-  doc.text(`Árbitro 2: ${ex.arb2 || '—'}`, 15, 64);
-  doc.text(`Anotador(a): ${ex.anotador || '—'}`, W / 2 + 5, 59);
-  doc.text(`Cronometrista: ${ex.crono || '—'}`, W / 2 + 5, 64);
+  doc.setFillColor(...BG3);doc.roundedRect(10,48,W-20,22,2,2,'F');
+  doc.setFontSize(7);doc.setTextColor(...AMBER);doc.setFont('helvetica','bold');
+  doc.text('EQUIPE DE ARBITRAGEM',15,54);
+  doc.setTextColor(...WHITE);doc.setFont('helvetica','normal');doc.setFontSize(8);
+  doc.text(`Árbitro 1: ${ex.arb1||'—'}`,15,59);
+  doc.text(`Árbitro 2: ${ex.arb2||'—'}`,15,64);
+  doc.text(`Anotador(a): ${ex.anotador||'—'}`,W/2+5,59);
+  doc.text(`Cronometrista: ${ex.crono||'—'}`,W/2+5,64);
 
-  const blocks = analysis.split(/\n(?=\d+\.\s+[A-ZÁÉÍÓÚ]|FRASE)/g).filter(b => b.trim());
-  let y = 76;
-  const LM = 10, CW = W - 20;
-  const colors = [[79,142,247],[52,211,153],[251,191,36],[167,139,250],[248,113,113],[79,142,247]];
+  const blocks=analysis.split(/\n(?=\d+\.\s+[A-ZÁÉÍÓÚ]|FRASE)/g).filter(b=>b.trim());
+  let y=76;
+  const LM=10,CW=W-20;
+  const colors=[[79,142,247],[52,211,153],[251,191,36],[167,139,250],[248,113,113],[79,142,247]];
 
-  blocks.forEach((block, idx) => {
-    const lines = block.trim().split('\n');
-    const rawTitle = lines[0].replace(/^\d+\.\s*/, '').trim();
-    const body = lines.slice(1).join('\n').trim();
-    const isFrase = rawTitle.toUpperCase().includes('FRASE');
-
-    if (isFrase) {
-      if (y + 20 > H - 12) { doc.addPage(); doc.setFillColor(...BG); doc.rect(0, 0, W, H, 'F'); y = 15; }
-      doc.setFillColor(20, 40, 80); doc.roundedRect(LM, y, CW, 18, 2, 2, 'F');
-      doc.setDrawColor(...BLUE); doc.setLineWidth(0.5); doc.roundedRect(LM, y, CW, 18, 2, 2, 'S');
-      doc.setFontSize(7); doc.setTextColor(...BLUE); doc.setFont('helvetica', 'bold');
-      doc.text('FRASE-CHAVE', LM + 4, y + 6);
-      doc.setFontSize(9); doc.setTextColor(...WHITE); doc.setFont('helvetica', 'bolditalic');
-      const fl = doc.splitTextToSize(body || rawTitle, CW - 8);
-      fl.slice(0, 2).forEach((l, i) => doc.text(l, LM + 4, y + 12 + i * 4.5));
-      y += 22;
-    } else {
-      const bodyLines = doc.splitTextToSize(body, CW - 8);
-      const bH = Math.min(70, 14 + bodyLines.length * 4.5);
-      if (y + bH > H - 12) { doc.addPage(); doc.setFillColor(...BG); doc.rect(0, 0, W, H, 'F'); y = 15; }
-      doc.setFillColor(...BG2); doc.roundedRect(LM, y, CW, bH, 2, 2, 'F');
-      const col = colors[idx % colors.length];
-      doc.setFillColor(...col); doc.roundedRect(LM, y, 2, bH, 1, 1, 'F');
-      doc.setFontSize(7.5); doc.setTextColor(...col); doc.setFont('helvetica', 'bold');
-      doc.text(rawTitle.toUpperCase(), LM + 5, y + 6);
-      doc.setFontSize(8.5); doc.setTextColor(...WHITE); doc.setFont('helvetica', 'normal');
-      let ty = y + 11;
-      bodyLines.forEach(l => { if (ty < y + bH - 2) { doc.text(l, LM + 5, ty); ty += 4.5; } });
-      y += bH + 4;
+  blocks.forEach((block,idx)=>{
+    const lines=block.trim().split('\n');
+    const rawTitle=lines[0].replace(/^\d+\.\s*/,'').trim();
+    const body=lines.slice(1).join('\n').trim();
+    const isFrase=rawTitle.toUpperCase().includes('FRASE');
+    if(isFrase){
+      if(y+20>H-12){doc.addPage();doc.setFillColor(...BG);doc.rect(0,0,W,H,'F');y=15;}
+      doc.setFillColor(20,40,80);doc.roundedRect(LM,y,CW,18,2,2,'F');
+      doc.setDrawColor(...BLUE);doc.setLineWidth(0.5);doc.roundedRect(LM,y,CW,18,2,2,'S');
+      doc.setFontSize(7);doc.setTextColor(...BLUE);doc.setFont('helvetica','bold');
+      doc.text('FRASE-CHAVE',LM+4,y+6);
+      doc.setFontSize(9);doc.setTextColor(...WHITE);doc.setFont('helvetica','bolditalic');
+      const fl=doc.splitTextToSize(body||rawTitle,CW-8);
+      fl.slice(0,2).forEach((l,i)=>doc.text(l,LM+4,y+12+i*4.5));
+      y+=22;
+    }else{
+      const bodyLines=doc.splitTextToSize(body,CW-8);
+      const bH=Math.min(70,14+bodyLines.length*4.5);
+      if(y+bH>H-12){doc.addPage();doc.setFillColor(...BG);doc.rect(0,0,W,H,'F');y=15;}
+      doc.setFillColor(...BG2);doc.roundedRect(LM,y,CW,bH,2,2,'F');
+      const col=colors[idx%colors.length];
+      doc.setFillColor(...col);doc.roundedRect(LM,y,2,bH,1,1,'F');
+      doc.setFontSize(7.5);doc.setTextColor(...col);doc.setFont('helvetica','bold');
+      doc.text(rawTitle.toUpperCase(),LM+5,y+6);
+      doc.setFontSize(8.5);doc.setTextColor(...WHITE);doc.setFont('helvetica','normal');
+      let ty=y+11;
+      bodyLines.forEach(l=>{if(ty<y+bH-2){doc.text(l,LM+5,ty);ty+=4.5;}});
+      y+=bH+4;
     }
   });
 
-  doc.setFillColor(...BG2); doc.rect(0, H - 10, W, 10, 'F');
-  doc.setFillColor(...BLUE); doc.rect(0, H - 1, W, 1, 'F');
-  doc.setFontSize(7); doc.setTextColor(...MUTED);
-  doc.text('ScoutRef · Análise Pré-Jogo · Arbitragem de Futsal', W / 2, H - 4, { align: 'center' });
+  doc.setFillColor(...BG2);doc.rect(0,H-10,W,10,'F');
+  doc.setFillColor(...BLUE);doc.rect(0,H-1,W,1,'F');
+  doc.setFontSize(7);doc.setTextColor(...MUTED);
+  doc.text('ScoutRef · Análise Pré-Jogo · Arbitragem de Futsal',W/2,H-4,{align:'center'});
 
-  const fn = `ScoutRef_${(ex.mandante || 'M').replace(/\s+/g, '_')}_x_${(ex.visitante || 'V').replace(/\s+/g, '_')}.pdf`;
+  const fn=`ScoutRef_${(ex.mandante||'M').replace(/\s+/g,'_')}_x_${(ex.visitante||'V').replace(/\s+/g,'_')}.pdf`;
   doc.save(fn);
-  document.getElementById('pdf-btn').disabled = false;
-  document.getElementById('pdf-btn').textContent = 'Baixar PDF profissional';
+  document.getElementById('pdf-btn').disabled=false;
+  document.getElementById('pdf-btn').textContent='Baixar PDF profissional';
 }
-
-// Fechar busca ao clicar fora
-document.addEventListener('click', e => {
-  ['t1', 't2'].forEach(t => {
-    const w = document.getElementById(t + '-q')?.closest('.search-wrap');
-    if (w && !w.contains(e.target)) {
-      const r = document.getElementById(t + '-res');
-      if (r) r.style.display = 'none';
-    }
-  });
-});
 </script>
 </body>
 </html>
