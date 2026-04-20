@@ -96,15 +96,31 @@ Durante: ${planData.mcMeio}
 Final: ${planData.mcFinal}
 Objetivo: ${planData.objetivo}
 
-Gere nos seguintes blocos EXATOS (use esses títulos):
-1. CONTEXTO DA PARTIDA
-2. PERFIL — ${matchData.mandante}
-3. PERFIL — ${matchData.visitante}
-4. PLANO DE ARBITRAGEM
-5. ORIENTAÇÕES LOGÍSTICAS
-6. FRASE-CHAVE
+REGRAS DE FORMATAÇÃO — OBRIGATÓRIAS:
+- Não use markdown (sem #, ##, **, *, ---)
+- Cada bloco começa EXATAMENTE com o número e título abaixo, seguido de quebra de linha
+- Texto corrido, sem listas, sem símbolos
 
-Cada bloco deve ser objetivo, direto e com no máximo 5-6 linhas. Sem introduções. Sem enrolação.`;
+BLOCOS OBRIGATÓRIOS:
+1. CONTEXTO DA PARTIDA
+[texto do bloco — máximo 5 linhas]
+
+2. PERFIL — ${matchData.mandante}
+[texto do bloco — máximo 5 linhas]
+
+3. PERFIL — ${matchData.visitante}
+[texto do bloco — máximo 5 linhas]
+
+4. PLANO DE ARBITRAGEM
+[texto do bloco — máximo 6 linhas]
+
+5. ORIENTAÇÕES LOGÍSTICAS
+[texto do bloco — máximo 4 linhas]
+
+6. FRASE-CHAVE
+[uma frase direta que resume o foco da arbitragem neste jogo]
+
+Seja direto e objetivo. Linguagem técnica de arbitragem. Sem introduções genéricas.`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
